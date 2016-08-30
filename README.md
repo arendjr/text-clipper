@@ -19,8 +19,6 @@ text-clipper offers the following advantages over similar libraries that allow c
    * Heavily unit-tested to support the above statement.
  * **Proper Unicode handling**
    * Unicode-awareness makes sure Unicode characters such as emojis don't get clipped halfway.
- * **Performance**
-   * text-clipper is faster than comparable clipping libraries.
  * Consistent API and behavior for both HTML and plain text.
 
 Setup

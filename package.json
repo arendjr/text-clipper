@@ -31,6 +31,9 @@
     "tape": "^4.6.0"
   },
   "prepush": {
-    "tasks": ["npm run lint", "npm test"]
+    "tasks": [
+      "npm run lint",
+      "npm test"
+    ]
   }
 }
