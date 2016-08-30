@@ -45,30 +45,30 @@ You can also specify options:
 Options
 -------
 
-=== breakWords ===
+### breakWords
 
 By default, text-clipper tries to break only at word boundaries so words don't get clipped halfway.
 Set this option to `true` if you want words to be broken up.
 
-=== html ===
+### html
 
 By default, text-clipper treats the input string as plain text. This is undesirable if the input
 string is HTML, because it might result in broken HTML tags. Set this option to `true` to make
 text-clipper treat the input as HTML, in which case it will try to always return valid HTML,
 provided the input is valid as well.
 
-=== imageWeight ===
+### imageWeight
 
 The amount of characters to assume for images. This is used whenever an image is encountered, but
 also for embedded SVG and MathML content. The default is 2.
 
-=== indicator ===
+### indicator
 
 The string to insert to indicate the string was clipped. Default: `'…'`.
 
 Note the indicator is only inserted when the clipping doesn't occur at a line-break.
 
-=== maxLines ===
+### maxLines
 
 Maximum amount of lines allowed. If given, the string will be clipped either at the moment the
 maximum amount of characters is exceeded or the moment maxLines newlines are discovered, whichever
