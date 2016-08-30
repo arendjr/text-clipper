@@ -1,0 +1,55 @@
+{
+    "env": {
+        "es6": true,
+        "node": true
+    },
+    "extends": "eslint:recommended",
+    "parserOptions": {
+        "ecmaFeatures": {
+            "globalReturn": true,
+            "modules": true
+        },
+        "ecmaVersion": 6,
+        "sourceType": "module"
+    },
+    "root": true,
+    "rules": {
+        "arrow-spacing": 2,
+        "brace-style": [2, "1tbs"],
+        "comma-dangle": [2, "never"],
+        "comma-spacing": 2,
+        "constructor-super": 2,
+        "indent": [2, 4],
+        "generator-star-spacing": [2, { "before": true, "after": false }],
+        "jsx-quotes": [2, "prefer-single"],
+        "key-spacing": 2,
+        "linebreak-style": [2, "unix"],
+        "max-len": [2, 100, 4],
+        "new-cap": 2,
+        "no-catch-shadow": 2,
+        "no-class-assign": 2,
+        "no-console": 0,
+        "no-const-assign": 2,
+        "no-delete-var": 2,
+        "no-dupe-class-members": 2,
+        "no-label-var": 2,
+        "no-this-before-super": 2,
+        "no-trailing-spaces": 2,
+        "no-undef": 2,
+        "no-undef-init": 2,
+        "no-unused-vars": 2,
+        "no-useless-constructor": 2,
+        "object-curly-spacing": [2, "always"],
+        "prefer-const": 2,
+        "quotes": [2, "single"],
+        "require-yield": 2,
+        "semi": [2, "always"],
+        "keyword-spacing": 2,
+        "space-before-function-paren": [2, "never"],
+        "spaced-comment": [2, "always", { "markers": ["/"] }],
+        "strict": [2, "global"],
+        "template-curly-spacing": [2, "never"],
+        "yield-star-spacing": [2, { "before": true, "after": false }],
+        "yoda": 2
+    }
+}

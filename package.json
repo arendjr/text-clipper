@@ -1,0 +1,36 @@
+{
+  "name": "text-clipper",
+  "version": "1.0.0",
+  "description": "Fast and correct clip functions for HTML and plain text.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "babel src --presets babel-preset-es2015 --out-dir dist",
+    "lint": "eslint src tests",
+    "prepublish": "npm run build",
+    "test": "tape -r babel-register tests/unit/*.js | faucet"
+  },
+  "author": "Speakap B.V.",
+  "keywords": [
+    "clip",
+    "html",
+    "string",
+    "text",
+    "trim",
+    "truncate"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "babel-cli": "^6.14.0",
+    "babel-plugin-array-includes": "^2.0.3",
+    "babel-preset-es2015": "^6.14.0",
+    "babel-register": "^6.14.0",
+    "eslint": "^3.4.0",
+    "faucet": "0.0.1",
+    "glob": "^7.0.6",
+    "prepush": "^3.1.11",
+    "tape": "^4.6.0"
+  },
+  "prepush": {
+    "tasks": ["npm run lint", "npm test"]
+  }
+}
