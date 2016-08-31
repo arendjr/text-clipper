@@ -10,12 +10,12 @@ const WHITESPACE_REGEX = /^\s+$/;
  *
  * In detail, the clipping rules are as follows:
  * - The resulting clipped string may never contain more than maxLength characters. Examples:
- *   - _.clip("foo", 3) => "foo"
- *   - _.clip("foo", 2) => "f…"
+ *   - clip("foo", 3) => "foo"
+ *   - clip("foo", 2) => "f…"
  * - The indicator is inserted if and only if the string is clipped at any place other than a
  *   newline. Examples:
- *   - _.clip("foo bar", 5) => "foo …"
- *   - _.clip("foo\nbar", 5) => "foo"
+ *   - clip("foo bar", 5) => "foo …"
+ *   - clip("foo\nbar", 5) => "foo"
  * - If the html option is true and valid HTML is inserted, the clipped output *must* also be valid
  *   HTML. If the input is not valid HTML, the result is undefined (not to be confused with JS'
  *   "undefined" type; some errors might be detected and result in an exception, but this is not
