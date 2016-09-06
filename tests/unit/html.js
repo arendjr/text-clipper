@@ -168,3 +168,11 @@ tape('html: test max lines', function(test) {
     test.equal(clip('Lorum\nipsum\n', 100, { html: true, maxLines: 2 }), 'Lorum\nipsum');
     test.equal(clip('Lorum\nipsum\n\n', 100, { html: true, maxLines: 2 }), 'Lorum\nipsum');
 });
+
+tape('html: test odd HTML', function(test) {
+    test.plan(1);
+
+    const options = { html: true };
+
+    test.equal(clip('<p><i>Lorum>>></i> <i>ipsum</i></p>', 7, options), '<p><i>Lorum>\u2026</i></p>');
+});
