@@ -76,7 +76,6 @@ function clipHtml(string, maxLength, options) {
 
     let attributeQuoteCharCode = 0;
     let isAttributeValue = false;
-    let isEntity = false;
     let isTag = false;
     let isUnbreakableContent = false;
     let startIndex = -1;
@@ -85,18 +84,7 @@ function clipHtml(string, maxLength, options) {
     for (let i = 0; i < length; i++) {
         const charCode = string.charCodeAt(i);
 
-        if (isEntity) {
-            if (charCode === SEMICOLON_CHAR_CODE) {
-                isEntity = false;
-
-                numChars++;
-                if (numChars > maxLength) {
-                    break;
-                }
-
-                result += string.slice(startIndex, i + 1);
-            }
-        } else if (isTag) {
+        if (isTag) {
             if (isAttributeValue) {
                 if (attributeQuoteCharCode) {
                     if (charCode === attributeQuoteCharCode) {
@@ -194,8 +182,23 @@ function clipHtml(string, maxLength, options) {
                 startIndex = i;
             }
         } else if (charCode === AMPERSAND_CHAR_CODE) {
-            isEntity = true;
-            startIndex = i;
+            let endIndex = i + 1;
+            while (string.charCodeAt(endIndex) !== SEMICOLON_CHAR_CODE) {
+                endIndex++;
+                if (endIndex === length) {
+                    throw new Error('Invalid HTML: ' + string);
+                }
+            }
+
+            if (!isUnbreakableContent) {
+                numChars++;
+                if (numChars > maxLength) {
+                    break;
+                }
+            }
+
+            result += string.slice(i, endIndex + 1);
+            i = endIndex;
         } else {
             if (!isUnbreakableContent) {
                 numChars++;
@@ -223,7 +226,7 @@ function clipHtml(string, maxLength, options) {
         }
     }
 
-    if (isEntity || isTag) {
+    if (isTag) {
         throw new Error('Invalid HTML: ' + string);
     }
 
