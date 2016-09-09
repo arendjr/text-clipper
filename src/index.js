@@ -1,8 +1,17 @@
 const VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input',
                        'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
 
+const NEWLINE_CHAR_CODE = 10; // '\n'
+const DOUBLE_QUOTE_CHAR_CODE = 34; // '"'
+const AMPERSAND_CHAR_CODE = 38; // '&'
+const SINGLE_QUOTE_CHAR_CODE = 39; // '\''
+const FORWARD_SLASH_CHAR_CODE = 47; // '/'
+const SEMICOLON_CHAR_CODE = 59; // ';'
+const TAG_OPEN_CHAR_CODE = 60; // '<'
+const EQUAL_SIGN_CHAR_CODE = 61; // '='
+const TAG_CLOSE_CHAR_CODE = 62; // '>'
+
 const TRIM_END_REGEX = /\s+$/;
-const WHITESPACE_REGEX = /^\s+$/;
 
 /**
  * Clips a string to a maximum length. If the string exceeds the length, it is truncated and an
@@ -65,7 +74,7 @@ function clipHtml(string, maxLength, options) {
     let numChars = 1;
     let numLines = 1;
 
-    let attributeQuoteChar = '';
+    let attributeQuoteCharCode = 0;
     let isAttributeValue = false;
     let isEntity = false;
     let isTag = false;
@@ -77,24 +86,23 @@ function clipHtml(string, maxLength, options) {
     const tagStack = [];
     const { length } = string;
     for (let i = 0; i < length; i++) {
-        const char = takeCharAt(string, i);
-        i += (char.length - 1);
+        const charCode = string.charCodeAt(i);
 
         if (isAttributeValue) {
-            if (attributeQuoteChar) {
-                if (char === attributeQuoteChar) {
+            if (attributeQuoteCharCode) {
+                if (charCode === attributeQuoteCharCode) {
                     isAttributeValue = false;
                 }
             } else {
-                if (isHtmlSpace(char)) {
+                if (isWhiteSpace(charCode)) {
                     isAttributeValue = false;
-                } else if (char === '>') {
+                } else if (charCode === TAG_CLOSE_CHAR_CODE) {
                     isAttributeValue = false;
                     i--; // re-evaluate this character
                 }
             }
         } else if (isEntity) {
-            if (char === ';') {
+            if (charCode === SEMICOLON_CHAR_CODE) {
                 isEntity = false;
 
                 numChars++;
@@ -105,25 +113,26 @@ function clipHtml(string, maxLength, options) {
                 result += string.slice(startIndex, i + 1);
             }
         } else if (isTag) {
-            if (char === '=') {
-                while (isHtmlSpace(string.charAt(i + 1))) {
+            if (charCode === EQUAL_SIGN_CHAR_CODE) {
+                while (isWhiteSpace(string.charCodeAt(i + 1))) {
                     i++; // skip whitespace
                 }
                 isAttributeValue = true;
 
-                const firstAttributeChar = string.charAt(i + 1);
-                if (firstAttributeChar === '"' || firstAttributeChar === '\'') {
-                    attributeQuoteChar = firstAttributeChar;
+                const firstAttributeCharCode = string.charCodeAt(i + 1);
+                if (firstAttributeCharCode === DOUBLE_QUOTE_CHAR_CODE ||
+                    firstAttributeCharCode === SINGLE_QUOTE_CHAR_CODE) {
+                    attributeQuoteCharCode = firstAttributeCharCode;
                     i++;
                 } else {
-                    attributeQuoteChar = '';
+                    attributeQuoteCharCode = 0;
                 }
-            } else if (char === '>') {
+            } else if (charCode === TAG_CLOSE_CHAR_CODE) {
                 isTag = false;
 
-                const isEndTag = (string.charAt(startIndex + 1) === '/');
+                const isEndTag = (string.charCodeAt(startIndex + 1) === FORWARD_SLASH_CHAR_CODE);
                 const tagNameStartIndex = startIndex + (isEndTag ? 2 : 1);
-                const tagNameEndIndex = Math.min(indexOfHtmlSpace(string, tagNameStartIndex), i);
+                const tagNameEndIndex = Math.min(indexOfWhiteSpace(string, tagNameStartIndex), i);
                 const tagName = string.slice(tagNameStartIndex, tagNameEndIndex).toLowerCase();
 
                 if (isEndTag) {
@@ -145,7 +154,8 @@ function clipHtml(string, maxLength, options) {
                             }
                         }
                     }
-                } else if (VOID_ELEMENTS.includes(tagName) || string.charAt(i - 1) === '/') {
+                } else if (VOID_ELEMENTS.includes(tagName) ||
+                           string.charCodeAt(i - 1) === FORWARD_SLASH_CHAR_CODE) {
                     if (tagName === 'br') {
                         numLines++;
                         if (numLines > maxLines) {
@@ -172,7 +182,7 @@ function clipHtml(string, maxLength, options) {
 
                 result += string.slice(startIndex, i + 1);
             }
-        } else if (char === '<') {
+        } else if (charCode === TAG_OPEN_CHAR_CODE) {
             if (string.substr(i + 1, 3) === '!--') {
                 const commentEndIndex = string.indexOf('-->', i + 4) + 3;
                 result += string.slice(i, commentEndIndex);
@@ -186,7 +196,8 @@ function clipHtml(string, maxLength, options) {
                 // allowed within SVG and MathML content, both of which we don't clip
             } else {
                 // don't open new tags if we are currently at the limit
-                if (numChars === maxLength && string.charAt(i + 1) !== '/') {
+                if (numChars === maxLength &&
+                    string.charCodeAt(i + 1) !== FORWARD_SLASH_CHAR_CODE) {
                     numChars++;
                     break;
                 }
@@ -194,7 +205,7 @@ function clipHtml(string, maxLength, options) {
                 isTag = true;
                 startIndex = i;
             }
-        } else if (char === '&') {
+        } else if (charCode === AMPERSAND_CHAR_CODE) {
             isEntity = true;
             startIndex = i;
         } else {
@@ -204,7 +215,7 @@ function clipHtml(string, maxLength, options) {
                     break;
                 }
 
-                if (char === '\n') {
+                if (charCode === NEWLINE_CHAR_CODE) {
                     lastPreferredClipIndex = i;
                     shouldIncludeIndicator = false;
 
@@ -212,7 +223,7 @@ function clipHtml(string, maxLength, options) {
                     if (numLines > maxLines) {
                         break;
                     }
-                } else if (isWhiteSpace(char)) {
+                } else if (isWhiteSpace(charCode)) {
                     lastCharacterWasWhitespace = true;
                 } else if (lastCharacterWasWhitespace) {
                     lastPreferredClipIndex = i;
@@ -221,7 +232,15 @@ function clipHtml(string, maxLength, options) {
                 }
             }
 
-            result += char;
+            result += String.fromCharCode(charCode);
+            if (charCode >= 0xd800 && charCode < 0xdc00) {
+                // high Unicode surrogate should never be separated from its matching low surrogate
+                const nextCharCode = string.charCodeAt(i + 1);
+                if (nextCharCode >= 0xdc00 && nextCharCode < 0xe000) {
+                    result += String.fromCharCode(nextCharCode);
+                    i++;
+                }
+            }
         }
     }
 
@@ -233,8 +252,8 @@ function clipHtml(string, maxLength, options) {
         if (numChars > maxLength) {
             let nextChar = takeCharAt(string, result.length);
             let peekIndex = result.length + nextChar.length;
-            while (peekIndex && string.charAt(peekIndex) === '<' &&
-                                string.charAt(peekIndex + 1) === '/') {
+            while (peekIndex && string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
+                                string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
                 peekIndex = string.indexOf('>', result.length + 2) + 1;
             }
 
@@ -259,7 +278,8 @@ function clipHtml(string, maxLength, options) {
             // include closing tags before adding the clipping indicator if that's where they
             // are in the input string
             let resultLength = result.length;
-            while (nextChar === '<' && string.charAt(resultLength + 1) === '/') {
+            while (nextChar === '<' &&
+                   string.charCodeAt(resultLength + 1) === FORWARD_SLASH_CHAR_CODE) {
                 const tagName = tagStack.pop();
                 const tagEndIndex = (tagName ? string.indexOf('>', resultLength + 2) : -1);
                 if (tagEndIndex === -1 || string.replace(TRIM_END_REGEX, '')
@@ -305,15 +325,14 @@ function clipPlainText(string, maxLength, options) {
     let shouldIncludeIndicator = true;
     const { length } = string;
     for (let i = 0; i < length; i++) {
-        const char = takeCharAt(string, i);
-        i += (char.length - 1);
+        const charCode = string.charCodeAt(i);
 
         numChars++;
         if (numChars > maxLength) {
             break;
         }
 
-        if (char === '\n') {
+        if (charCode === NEWLINE_CHAR_CODE) {
             lastPreferredClipIndex = i;
             shouldIncludeIndicator = false;
 
@@ -321,7 +340,7 @@ function clipPlainText(string, maxLength, options) {
             if (numLines > maxLines) {
                 break;
             }
-        } else if (isWhiteSpace(char)) {
+        } else if (isWhiteSpace(charCode)) {
             lastCharacterWasWhitespace = true;
         } else if (lastCharacterWasWhitespace) {
             lastPreferredClipIndex = i;
@@ -329,7 +348,15 @@ function clipPlainText(string, maxLength, options) {
             shouldIncludeIndicator = true;
         }
 
-        result += char;
+        result += String.fromCharCode(charCode);
+        if (charCode >= 0xd800 && charCode < 0xdc00) {
+            // high Unicode surrogate should never be separated from its matching low surrogate
+            const nextCharCode = string.charCodeAt(i + 1);
+            if (nextCharCode >= 0xdc00 && nextCharCode < 0xe000) {
+                result += String.fromCharCode(nextCharCode);
+                i++;
+            }
+        }
     }
 
     if (numChars > maxLength || numLines > maxLines) {
@@ -360,11 +387,11 @@ function clipPlainText(string, maxLength, options) {
     return result;
 }
 
-function indexOfHtmlSpace(string, fromIndex) {
+function indexOfWhiteSpace(string, fromIndex) {
 
     const { length } = string;
     for (let i = fromIndex; i < length; i++) {
-        if (isHtmlSpace(string.charAt(i))) {
+        if (isWhiteSpace(string.charCodeAt(i))) {
             return i;
         }
     }
@@ -373,37 +400,33 @@ function indexOfHtmlSpace(string, fromIndex) {
     return length;
 }
 
-function isHtmlSpace(char) {
-
-    return (char === '\t' || char === '\n' || char === '\f' || char === '\r' || char === ' ');
-}
-
 function isLineBreak(string, index) {
 
-    const firstChar = string.charAt(index);
-    if (firstChar === '\n') {
+    const firstCharCode = string.charCodeAt(index);
+    if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
-    } else if (firstChar === '<') {
+    } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
         return /<br[\t\n\f\r ]*\/?>/i.test(string.slice(index));
     } else {
         return false;
     }
 }
 
-function isWhiteSpace(string) {
+function isWhiteSpace(charCode) {
 
-    return WHITESPACE_REGEX.test(string);
+    return charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 ||
+           charCode === 32;
 }
 
 function takeCharAt(string, index) {
 
-    let char = string.charAt(index);
-    if (char >= '\ud800' && char < '\udc00') {
+    const charCode = string.charCodeAt(index);
+    if (charCode >= 0xd800 && charCode < 0xdc00) {
         // high Unicode surrogate should never be separated from its matching low surrogate
-        const nextChar = string.charAt(index + 1);
-        if (nextChar >= '\udc00' && nextChar < '\ue000') {
-            char += nextChar;
+        const nextCharCode = string.charCodeAt(index + 1);
+        if (nextCharCode >= 0xdc00 && nextCharCode < 0xe000) {
+            return String.fromCharCode(charCode, nextCharCode);
         }
     }
-    return char;
+    return String.fromCharCode(charCode);
 }
