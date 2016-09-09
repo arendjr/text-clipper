@@ -71,3 +71,6 @@ Note the indicator is only inserted when the clipping doesn't occur at a line-br
 Maximum amount of lines allowed. If given, the string will be clipped either at the moment the
 maximum amount of characters is exceeded or the moment maxLines newlines are discovered, whichever
 comes first.
+
+Note when in HTML mode, text-clipper assumes the text will be displayed with a CSS white-space
+setting that treats `\n` as a line break. Of course the HTML tag `<br>` is also counted.
