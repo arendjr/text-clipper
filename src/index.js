@@ -74,91 +74,12 @@ function clipHtml(string, maxLength, options) {
     let numChars = 1;
     let numLines = 1;
 
-    let attributeQuoteCharCode = 0;
-    let isAttributeValue = false;
-    let isTag = false;
     let isUnbreakableContent = false;
-    let startIndex = -1;
     const tagStack = [];
     const { length } = string;
     for (let i = 0; i < length; i++) {
         const charCode = string.charCodeAt(i);
-
-        if (isTag) {
-            if (isAttributeValue) {
-                if (attributeQuoteCharCode) {
-                    if (charCode === attributeQuoteCharCode) {
-                        isAttributeValue = false;
-                    }
-                } else {
-                    if (isWhiteSpace(charCode)) {
-                        isAttributeValue = false;
-                    } else if (charCode === TAG_CLOSE_CHAR_CODE) {
-                        isAttributeValue = false;
-                        i--; // re-evaluate this character
-                    }
-                }
-            } else if (charCode === EQUAL_SIGN_CHAR_CODE) {
-                while (isWhiteSpace(string.charCodeAt(i + 1))) {
-                    i++; // skip whitespace
-                }
-                isAttributeValue = true;
-
-                const firstAttributeCharCode = string.charCodeAt(i + 1);
-                if (firstAttributeCharCode === DOUBLE_QUOTE_CHAR_CODE ||
-                    firstAttributeCharCode === SINGLE_QUOTE_CHAR_CODE) {
-                    attributeQuoteCharCode = firstAttributeCharCode;
-                    i++;
-                } else {
-                    attributeQuoteCharCode = 0;
-                }
-            } else if (charCode === TAG_CLOSE_CHAR_CODE) {
-                isTag = false;
-
-                const isEndTag = (string.charCodeAt(startIndex + 1) === FORWARD_SLASH_CHAR_CODE);
-                const tagNameStartIndex = startIndex + (isEndTag ? 2 : 1);
-                const tagNameEndIndex = Math.min(indexOfWhiteSpace(string, tagNameStartIndex), i);
-                const tagName = string.slice(tagNameStartIndex, tagNameEndIndex).toLowerCase();
-
-                if (isEndTag) {
-                    const currentTagName = tagStack.pop();
-                    if (currentTagName !== tagName) {
-                        throw new Error('Invalid HTML: ' + string);
-                    }
-
-                    if (tagName === 'math' || tagName === 'svg') {
-                        isUnbreakableContent = (tagStack.includes('math') ||
-                                                tagStack.includes('svg'));
-                        if (!isUnbreakableContent) {
-                            numChars += imageWeight;
-                            if (numChars > maxLength) {
-                                break;
-                            }
-                        }
-                    }
-                } else if (VOID_ELEMENTS.includes(tagName) ||
-                           string.charCodeAt(i - 1) === FORWARD_SLASH_CHAR_CODE) {
-                    if (tagName === 'br') {
-                        numLines++;
-                        if (numLines > maxLines) {
-                            break;
-                        }
-                    } else if (tagName === 'img') {
-                        numChars += imageWeight;
-                        if (numChars > maxLength) {
-                            break;
-                        }
-                    }
-                } else {
-                    tagStack.push(tagName);
-                    if (tagName === 'math' || tagName === 'svg') {
-                        isUnbreakableContent = true;
-                    }
-                }
-
-                result += string.slice(startIndex, i + 1);
-            }
-        } else if (charCode === TAG_OPEN_CHAR_CODE) {
+        if (charCode === TAG_OPEN_CHAR_CODE) {
             if (string.substr(i + 1, 3) === '!--') {
                 const commentEndIndex = string.indexOf('-->', i + 4) + 3;
                 result += string.slice(i, commentEndIndex);
@@ -178,14 +99,103 @@ function clipHtml(string, maxLength, options) {
                     break;
                 }
 
-                isTag = true;
-                startIndex = i;
+                let attributeQuoteCharCode = 0;
+                let endIndex = i;
+                let isAttributeValue = false;
+                while (true) { // eslint-disable-line
+                    endIndex++;
+                    if (endIndex >= length) {
+                        throw new Error('Invalid HTML: ' + string);
+                    }
+
+                    const charCode = string.charCodeAt(endIndex);
+                    if (isAttributeValue) {
+                        if (attributeQuoteCharCode) {
+                            if (charCode === attributeQuoteCharCode) {
+                                isAttributeValue = false;
+                            }
+                        } else {
+                            if (isWhiteSpace(charCode)) {
+                                isAttributeValue = false;
+                            } else if (charCode === TAG_CLOSE_CHAR_CODE) {
+                                isAttributeValue = false;
+                                endIndex--; // re-evaluate this character
+                            }
+                        }
+                    } else if (charCode === EQUAL_SIGN_CHAR_CODE) {
+                        while (isWhiteSpace(string.charCodeAt(endIndex + 1))) {
+                            endIndex++; // skip whitespace
+                        }
+                        isAttributeValue = true;
+
+                        const firstAttributeCharCode = string.charCodeAt(endIndex + 1);
+                        if (firstAttributeCharCode === DOUBLE_QUOTE_CHAR_CODE ||
+                            firstAttributeCharCode === SINGLE_QUOTE_CHAR_CODE) {
+                            attributeQuoteCharCode = firstAttributeCharCode;
+                            endIndex++;
+                        } else {
+                            attributeQuoteCharCode = 0;
+                        }
+                    } else if (charCode === TAG_CLOSE_CHAR_CODE) {
+                        const isEndTag = (string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE);
+                        const tagNameStartIndex = i + (isEndTag ? 2 : 1);
+                        const tagNameEndIndex = Math.min(
+                            indexOfWhiteSpace(string, tagNameStartIndex),
+                            endIndex
+                        );
+                        const tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
+                                              .toLowerCase();
+
+                        if (isEndTag) {
+                            const currentTagName = tagStack.pop();
+                            if (currentTagName !== tagName) {
+                                throw new Error('Invalid HTML: ' + string);
+                            }
+
+                            if (tagName === 'math' || tagName === 'svg') {
+                                isUnbreakableContent = (tagStack.includes('math') ||
+                                                        tagStack.includes('svg'));
+                                if (!isUnbreakableContent) {
+                                    numChars += imageWeight;
+                                    if (numChars > maxLength) {
+                                        break;
+                                    }
+                                }
+                            }
+                        } else if (VOID_ELEMENTS.includes(tagName) ||
+                                   string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
+                            if (tagName === 'br') {
+                                numLines++;
+                                if (numLines > maxLines) {
+                                    break;
+                                }
+                            } else if (tagName === 'img') {
+                                numChars += imageWeight;
+                                if (numChars > maxLength) {
+                                    break;
+                                }
+                            }
+                        } else {
+                            tagStack.push(tagName);
+                            if (tagName === 'math' || tagName === 'svg') {
+                                isUnbreakableContent = true;
+                            }
+                        }
+
+                        result += string.slice(i, endIndex + 1);
+                        i = endIndex;
+                        break;
+                    }
+                }
+                if (numChars > maxLength || numLines > maxLines) {
+                    break;
+                }
             }
         } else if (charCode === AMPERSAND_CHAR_CODE) {
             let endIndex = i + 1;
             while (string.charCodeAt(endIndex) !== SEMICOLON_CHAR_CODE) {
                 endIndex++;
-                if (endIndex === length) {
+                if (endIndex >= length) {
                     throw new Error('Invalid HTML: ' + string);
                 }
             }
@@ -224,10 +234,6 @@ function clipHtml(string, maxLength, options) {
                 }
             }
         }
-    }
-
-    if (isTag) {
-        throw new Error('Invalid HTML: ' + string);
     }
 
     if (numChars > maxLength) {
