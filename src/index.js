@@ -349,10 +349,10 @@ function clipPlainText(string, maxLength, options) {
         }
 
         result += String.fromCharCode(charCode);
-        if (charCode >= 0xd800 && charCode < 0xdc00) {
+        if ((charCode & 0xfc00) === 0xd800) {
             // high Unicode surrogate should never be separated from its matching low surrogate
             const nextCharCode = string.charCodeAt(i + 1);
-            if (nextCharCode >= 0xdc00 && nextCharCode < 0xe000) {
+            if ((nextCharCode & 0xfc00) === 0xdc00) {
                 result += String.fromCharCode(nextCharCode);
                 i++;
             }
@@ -421,10 +421,10 @@ function isWhiteSpace(charCode) {
 function takeCharAt(string, index) {
 
     const charCode = string.charCodeAt(index);
-    if (charCode >= 0xd800 && charCode < 0xdc00) {
+    if ((charCode & 0xfc00) === 0xd800) {
         // high Unicode surrogate should never be separated from its matching low surrogate
         const nextCharCode = string.charCodeAt(index + 1);
-        if (nextCharCode >= 0xdc00 && nextCharCode < 0xe000) {
+        if ((nextCharCode & 0xfc00) === 0xdc00) {
             return String.fromCharCode(charCode, nextCharCode);
         }
     }
