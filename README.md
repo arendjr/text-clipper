@@ -19,7 +19,28 @@ text-clipper offers the following advantages over similar libraries that allow c
    * Heavily unit-tested to support the above statement.
  * **Proper Unicode handling**
    * Unicode-awareness makes sure Unicode characters such as emojis don't get clipped halfway.
- * Consistent API and behavior for both HTML and plain text.
+ * **Performance**
+   * Text-clipper has been carefully optimized and is typically as fast as or faster than its
+     competitors (*).
+ * **Consistent API and behavior for both HTML and plain text**
+
+*) Performance metrics:
+
+With text with a few HTML tags:
+
+    text-clipper x 426,806 ops/sec ±4.33% (48 runs sampled)
+    html-truncate x 146,281 ops/sec ±3.40% (53 runs sampled)
+    trim-html x 55,098 ops/sec ±3.05% (50 runs sampled)
+    truncate-html x 1,503 ops/sec ±3.62% (48 runs sampled)
+    Fastest is text-clipper
+
+With text with a lot of HTML tags:
+
+    text-clipper x 86,188 ops/sec ±3.29% (50 runs sampled)
+    html-truncate x 81,159 ops/sec ±4.08% (48 runs sampled)
+    trim-html x 42,780 ops/sec ±2.43% (53 runs sampled)
+    truncate-html x 1,273 ops/sec ±5.09% (54 runs sampled)
+    Fastest is text-clipper
 
 Setup
 -----
