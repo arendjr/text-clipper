@@ -88,20 +88,7 @@ function clipHtml(string, maxLength, options) {
     for (let i = 0; i < length; i++) {
         const charCode = string.charCodeAt(i);
 
-        if (isAttributeValue) {
-            if (attributeQuoteCharCode) {
-                if (charCode === attributeQuoteCharCode) {
-                    isAttributeValue = false;
-                }
-            } else {
-                if (isWhiteSpace(charCode)) {
-                    isAttributeValue = false;
-                } else if (charCode === TAG_CLOSE_CHAR_CODE) {
-                    isAttributeValue = false;
-                    i--; // re-evaluate this character
-                }
-            }
-        } else if (isEntity) {
+        if (isEntity) {
             if (charCode === SEMICOLON_CHAR_CODE) {
                 isEntity = false;
 
@@ -113,7 +100,20 @@ function clipHtml(string, maxLength, options) {
                 result += string.slice(startIndex, i + 1);
             }
         } else if (isTag) {
-            if (charCode === EQUAL_SIGN_CHAR_CODE) {
+            if (isAttributeValue) {
+                if (attributeQuoteCharCode) {
+                    if (charCode === attributeQuoteCharCode) {
+                        isAttributeValue = false;
+                    }
+                } else {
+                    if (isWhiteSpace(charCode)) {
+                        isAttributeValue = false;
+                    } else if (charCode === TAG_CLOSE_CHAR_CODE) {
+                        isAttributeValue = false;
+                        i--; // re-evaluate this character
+                    }
+                }
+            } else if (charCode === EQUAL_SIGN_CHAR_CODE) {
                 while (isWhiteSpace(string.charCodeAt(i + 1))) {
                     i++; // skip whitespace
                 }
@@ -233,10 +233,10 @@ function clipHtml(string, maxLength, options) {
             }
 
             result += String.fromCharCode(charCode);
-            if (charCode >= 0xd800 && charCode < 0xdc00) {
+            if ((charCode & 0xfc00) === 0xd800) {
                 // high Unicode surrogate should never be separated from its matching low surrogate
                 const nextCharCode = string.charCodeAt(i + 1);
-                if (nextCharCode >= 0xdc00 && nextCharCode < 0xe000) {
+                if ((nextCharCode & 0xfc00) === 0xdc00) {
                     result += String.fromCharCode(nextCharCode);
                     i++;
                 }
