@@ -79,10 +79,7 @@ function clipHtml(string, maxLength, options) {
     let isEntity = false;
     let isTag = false;
     let isUnbreakableContent = false;
-    let lastCharacterWasWhitespace = false;
-    let lastPreferredClipIndex = -1;
     let startIndex = -1;
-    let shouldIncludeIndicator = true;
     const tagStack = [];
     const { length } = string;
     for (let i = 0; i < length; i++) {
@@ -141,9 +138,6 @@ function clipHtml(string, maxLength, options) {
                         throw new Error('Invalid HTML: ' + string);
                     }
 
-                    lastPreferredClipIndex = -1; // we should never go back and clip before the end
-                                                 // tag as that might leave the tag unclosed
-
                     if (tagName === 'math' || tagName === 'svg') {
                         isUnbreakableContent = (tagStack.includes('math') ||
                                                 tagStack.includes('svg'));
@@ -161,17 +155,11 @@ function clipHtml(string, maxLength, options) {
                         if (numLines > maxLines) {
                             break;
                         }
-
-                        lastPreferredClipIndex = startIndex;
-                        shouldIncludeIndicator = false;
                     } else if (tagName === 'img') {
                         numChars += imageWeight;
                         if (numChars > maxLength) {
                             break;
                         }
-
-                        lastPreferredClipIndex = i + 1;
-                        shouldIncludeIndicator = true;
                     }
                 } else {
                     tagStack.push(tagName);
@@ -216,19 +204,10 @@ function clipHtml(string, maxLength, options) {
                 }
 
                 if (charCode === NEWLINE_CHAR_CODE) {
-                    lastPreferredClipIndex = i;
-                    shouldIncludeIndicator = false;
-
                     numLines++;
                     if (numLines > maxLines) {
                         break;
                     }
-                } else if (isWhiteSpace(charCode)) {
-                    lastCharacterWasWhitespace = true;
-                } else if (lastCharacterWasWhitespace) {
-                    lastPreferredClipIndex = i;
-                    lastCharacterWasWhitespace = false;
-                    shouldIncludeIndicator = true;
                 }
             }
 
@@ -248,58 +227,67 @@ function clipHtml(string, maxLength, options) {
         throw new Error('Invalid HTML: ' + string);
     }
 
-    if (numChars > maxLength || numLines > maxLines) {
-        if (numChars > maxLength) {
-            let nextChar = takeCharAt(string, result.length);
-            let peekIndex = result.length + nextChar.length;
-            while (peekIndex && string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
-                                string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
-                peekIndex = string.indexOf('>', result.length + 2) + 1;
-            }
-
-            if (peekIndex && (peekIndex === string.length || isLineBreak(string, peekIndex))) {
-                // if there's only a single character remaining in the input string, or the next
-                // character is followed by a line-break, we can include it instead of the clipping
-                // indicator (provided it's not a special HTML character)
-                if (nextChar === '<' || nextChar === '&') {
-                    throw new Error('Invalid HTML: ' + string);
-                }
-
-                result += nextChar;
-                nextChar = string.charAt(result.length);
-                shouldIncludeIndicator = false;
-                lastPreferredClipIndex = -1;
-            } else if (lastCharacterWasWhitespace) {
-                lastPreferredClipIndex = result.length;
-                lastCharacterWasWhitespace = false;
-                shouldIncludeIndicator = true;
-            }
-
-            // include closing tags before adding the clipping indicator if that's where they
-            // are in the input string
-            let resultLength = result.length;
-            while (nextChar === '<' &&
-                   string.charCodeAt(resultLength + 1) === FORWARD_SLASH_CHAR_CODE) {
-                const tagName = tagStack.pop();
-                const tagEndIndex = (tagName ? string.indexOf('>', resultLength + 2) : -1);
-                if (tagEndIndex === -1 || string.replace(TRIM_END_REGEX, '')
-                                                .slice(resultLength + 2, tagEndIndex) !== tagName) {
-                    throw new Error('Invalid HTML: ' + string);
-                }
-
-                result += string.slice(resultLength, tagEndIndex + 1);
-                resultLength = result.length;
-                nextChar = string.charAt(resultLength);
-            }
+    if (numChars > maxLength) {
+        let nextChar = takeCharAt(string, result.length);
+        let peekIndex = result.length + nextChar.length;
+        while (peekIndex && string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
+                            string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
+            peekIndex = string.indexOf('>', result.length + 2) + 1;
         }
 
-        if (!options.breakWords && lastPreferredClipIndex > 0) {
-            // try to clip at word boundaries, if desired
-            result = result.slice(0, lastPreferredClipIndex);
+        if (peekIndex && (peekIndex === string.length || isLineBreak(string, peekIndex))) {
+            // if there's only a single character remaining in the input string, or the next
+            // character is followed by a line-break, we can include it instead of the clipping
+            // indicator (provided it's not a special HTML character)
+            if (nextChar === '<' || nextChar === '&') {
+                throw new Error('Invalid HTML: ' + string);
+            }
+
+            result += nextChar;
+            nextChar = string.charAt(result.length);
         }
 
-        if (shouldIncludeIndicator) {
-            result += options.indicator;
+        // include closing tags before adding the clipping indicator if that's where they
+        // are in the input string
+        let resultLength = result.length;
+        while (nextChar === '<' &&
+               string.charCodeAt(resultLength + 1) === FORWARD_SLASH_CHAR_CODE) {
+            const tagName = tagStack.pop();
+            const tagEndIndex = (tagName ? string.indexOf('>', resultLength + 2) : -1);
+            if (tagEndIndex === -1 || string.replace(TRIM_END_REGEX, '')
+                                            .slice(resultLength + 2, tagEndIndex) !== tagName) {
+                throw new Error('Invalid HTML: ' + string);
+            }
+
+            result += string.slice(resultLength, tagEndIndex + 1);
+            resultLength = result.length;
+            nextChar = string.charAt(resultLength);
+        }
+
+        if (result.length < string.length) {
+            if (!options.breakWords) {
+                // try to clip at word boundaries, if desired
+                for (let i = result.length - 1; i >= 0; i--) {
+                    const charCode = result.charCodeAt(i);
+                    if (charCode === TAG_CLOSE_CHAR_CODE || charCode === SEMICOLON_CHAR_CODE) {
+                        // these characters could be just regular characters, so if they occur in
+                        // the middle of a word, they would "break" our attempt to prevent breaking
+                        // of words, but given this seems highly unlikely and the alternative is
+                        // doing another full parsing of the preceding text, this seems acceptable.
+                        break;
+                    } else if (charCode === NEWLINE_CHAR_CODE) {
+                        result = result.slice(0, i);
+                        break;
+                    } else if (isWhiteSpace(charCode)) {
+                        result = result.slice(0, i + 1);
+                        break;
+                    }
+                }
+            }
+
+            if (!isLineBreak(string, result.length)) {
+                result += options.indicator;
+            }
         }
     }
 
@@ -320,9 +308,6 @@ function clipPlainText(string, maxLength, options) {
     let numChars = 1;
     let numLines = 1;
 
-    let lastCharacterWasWhitespace = false;
-    let lastPreferredClipIndex = -1;
-    let shouldIncludeIndicator = true;
     const { length } = string;
     for (let i = 0; i < length; i++) {
         const charCode = string.charCodeAt(i);
@@ -333,19 +318,10 @@ function clipPlainText(string, maxLength, options) {
         }
 
         if (charCode === NEWLINE_CHAR_CODE) {
-            lastPreferredClipIndex = i;
-            shouldIncludeIndicator = false;
-
             numLines++;
             if (numLines > maxLines) {
                 break;
             }
-        } else if (isWhiteSpace(charCode)) {
-            lastCharacterWasWhitespace = true;
-        } else if (lastCharacterWasWhitespace) {
-            lastPreferredClipIndex = i;
-            lastCharacterWasWhitespace = false;
-            shouldIncludeIndicator = true;
         }
 
         result += String.fromCharCode(charCode);
@@ -359,28 +335,30 @@ function clipPlainText(string, maxLength, options) {
         }
     }
 
-    if (numChars > maxLength || numLines > maxLines) {
-        if (numChars > maxLength) {
-            const nextChar = takeCharAt(string, result.length);
-            const peekIndex = result.length + nextChar.length;
-            if (peekIndex && (peekIndex === string.length || isLineBreak(string, peekIndex))) {
-                result += nextChar;
-                shouldIncludeIndicator = false;
-                lastPreferredClipIndex = -1;
-            } else if (lastCharacterWasWhitespace) {
-                lastPreferredClipIndex = result.length;
-                lastCharacterWasWhitespace = false;
-                shouldIncludeIndicator = true;
+    if (numChars > maxLength) {
+        let nextChar = takeCharAt(string, result.length);
+        const peekIndex = result.length + nextChar.length;
+        if (peekIndex === string.length || string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
+            result += nextChar;
+        } else {
+            if (!options.breakWords) {
+                // try to clip at word boundaries, if desired
+                for (let i = result.length - 1; i >= 0; i--) {
+                    const charCode = result.charCodeAt(i);
+                    if (charCode === NEWLINE_CHAR_CODE) {
+                        result = result.slice(0, i);
+                        nextChar = '\n';
+                        break;
+                    } else if (isWhiteSpace(charCode)) {
+                        result = result.slice(0, i + 1);
+                        break;
+                    }
+                }
             }
-        }
 
-        if (!options.breakWords && lastPreferredClipIndex > 0) {
-            // try to clip at word boundaries, if desired
-            result = result.slice(0, lastPreferredClipIndex);
-        }
-
-        if (shouldIncludeIndicator) {
-            result += options.indicator;
+            if (nextChar !== '\n') {
+                result += options.indicator;
+            }
         }
     }
 
