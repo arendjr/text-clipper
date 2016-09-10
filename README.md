@@ -36,11 +36,11 @@ With text with a few HTML tags:
 
 With text with a lot of HTML tags:
 
-    text-clipper x 86,188 ops/sec ±3.29% (50 runs sampled)
-    html-truncate x 81,159 ops/sec ±4.08% (48 runs sampled)
-    trim-html x 42,780 ops/sec ±2.43% (53 runs sampled)
-    truncate-html x 1,273 ops/sec ±5.09% (54 runs sampled)
-    Fastest is text-clipper
+    text-clipper x 89,645 ops/sec ±2.84% (54 runs sampled)
+    html-truncate x 90,654 ops/sec ±4.57% (49 runs sampled)
+    trim-html x 36,977 ops/sec ±1.55% (77 runs sampled)
+    truncate-html x 1,107 ops/sec ±6.15% (47 runs sampled)
+    Fastest is text-clipper,html-truncate
 
 Setup
 -----
