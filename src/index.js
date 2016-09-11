@@ -271,9 +271,14 @@ function clipHtml(string, maxLength, options) {
     if (numChars > maxLength) {
         let nextChar = takeCharAt(string, result.length);
         let peekIndex = result.length + nextChar.length;
-        while (peekIndex && string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
-                            string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
-            peekIndex = string.indexOf('>', result.length + 2) + 1;
+        while (string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
+               string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
+            const nextPeekIndex = string.indexOf('>', peekIndex + 2) + 1;
+            if (nextPeekIndex) {
+                peekIndex = nextPeekIndex;
+            } else {
+                break;
+            }
         }
 
         if (peekIndex && (peekIndex === string.length || isLineBreak(string, peekIndex))) {

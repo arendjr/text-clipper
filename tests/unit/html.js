@@ -3,7 +3,7 @@ const tape = require('tape');
 const clip = require('../../src');
 
 tape('html: test basic HTML', function(test) {
-    test.plan(8);
+    test.plan(29);
 
     const options = { html: true };
 
@@ -13,6 +13,30 @@ tape('html: test basic HTML', function(test) {
     test.equal(clip('<p><i>Lorum</i> <i>ipsum</i></p>', 7, options), '<p><i>Lorum</i> \u2026</p>');
     test.equal(clip('<p><i>Lorum</i>\n<i>ipsum</i></p>', 5, options), '<p><i>Lorum</i></p>');
     test.equal(clip('<p><i>Lorum</i><br><i>ipsum</i></p>', 5, options), '<p><i>Lorum</i></p>');
+
+    test.equal(clip('<p><i>Lorum</i></p>', 5, options), '<p><i>Lorum</i></p>');
+
+    test.equal(clip('<p><i>Lorum</i>a</p>', 5, options), '<p><i>Loru\u2026</i></p>');
+    test.equal(clip('<p><i>Lorum</i></p>a', 5, options), '<p><i>Loru\u2026</i></p>');
+    test.equal(clip('<p><i>Lorum</i>a</p>', 6, options), '<p><i>Lorum</i>a</p>');
+    test.equal(clip('<p><i>Lorum</i></p>a', 6, options), '<p><i>Lorum</i></p>a');
+    test.equal(clip('<p><i>Lorum</i>aA</p>', 6, options), '<p><i>Lorum</i>\u2026</p>');
+    test.equal(clip('<p><i>Lorum</i></p>aA', 6, options), '<p><i>Lorum</i></p>\u2026');
+    test.equal(clip('<p><i>Lorum</i>a</p>', 7, options), '<p><i>Lorum</i>a</p>');
+    test.equal(clip('<p><i>Lorum</i></p>a', 7, options), '<p><i>Lorum</i></p>a');
+    test.equal(clip('<p><i>Lorum</i>aA</p>', 7, options), '<p><i>Lorum</i>aA</p>');
+    test.equal(clip('<p><i>Lorum</i></p>aA', 7, options), '<p><i>Lorum</i></p>aA');
+
+    test.equal(clip('<p><i>Lorum</i> </p>', 5, options), '<p><i>Loru\u2026</i></p>');
+    test.equal(clip('<p><i>Lorum</i></p> ', 5, options), '<p><i>Loru\u2026</i></p>');
+    test.equal(clip('<p><i>Lorum</i> </p>', 6, options), '<p><i>Lorum</i> </p>');
+    test.equal(clip('<p><i>Lorum</i></p> ', 6, options), '<p><i>Lorum</i></p> ');
+    test.equal(clip('<p><i>Lorum</i>  </p>', 6, options), '<p><i>Lorum</i>\u2026</p>');
+    test.equal(clip('<p><i>Lorum</i></p>  ', 6, options), '<p><i>Lorum</i></p>\u2026');
+    test.equal(clip('<p><i>Lorum</i> </p>', 7, options), '<p><i>Lorum</i> </p>');
+    test.equal(clip('<p><i>Lorum</i></p> ', 7, options), '<p><i>Lorum</i></p> ');
+    test.equal(clip('<p><i>Lorum</i>  </p>', 7, options), '<p><i>Lorum</i>  </p>');
+    test.equal(clip('<p><i>Lorum</i></p>  ', 7, options), '<p><i>Lorum</i></p>  ');
 
     test.equal(
         clip('<a href="http://just-a-link.com">Just a link</a>', 8, options),
