@@ -334,66 +334,62 @@ function clipPlainText(string, maxLength, options) {
 
     const { maxLines } = options;
 
-    let result = '';
-
     let numChars = 1;
     let numLines = 1;
 
+    let i = 0;
     const { length } = string;
-    for (let i = 0; i < length; i++) {
-        const charCode = string.charCodeAt(i);
-
+    for (; i < length; i++) {
         numChars++;
         if (numChars > maxLength) {
             break;
         }
 
+        const charCode = string.charCodeAt(i);
         if (charCode === NEWLINE_CHAR_CODE) {
             numLines++;
             if (numLines > maxLines) {
                 break;
             }
-        }
-
-        result += String.fromCharCode(charCode);
-        if ((charCode & 0xfc00) === 0xd800) {
+        } else if ((charCode & 0xfc00) === 0xd800) {
             // high Unicode surrogate should never be separated from its matching low surrogate
             const nextCharCode = string.charCodeAt(i + 1);
             if ((nextCharCode & 0xfc00) === 0xdc00) {
-                result += String.fromCharCode(nextCharCode);
                 i++;
             }
         }
     }
 
     if (numChars > maxLength) {
-        let nextChar = takeCharAt(string, result.length);
-        const peekIndex = result.length + nextChar.length;
-        if (peekIndex === string.length || string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
-            result += nextChar;
+        let nextChar = takeCharAt(string, i);
+        const peekIndex = i + nextChar.length;
+        if (peekIndex === string.length) {
+            return string;
+        } else if (string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
+            return string.slice(0, i + nextChar.length);
         } else {
             if (!options.breakWords) {
                 // try to clip at word boundaries, if desired
-                for (let i = result.length - 1; i >= 0; i--) {
-                    const charCode = result.charCodeAt(i);
+                for (let j = i - 1; j >= 0; j--) {
+                    const charCode = string.charCodeAt(j);
                     if (charCode === NEWLINE_CHAR_CODE) {
-                        result = result.slice(0, i);
+                        i = j;
                         nextChar = '\n';
                         break;
                     } else if (isWhiteSpace(charCode)) {
-                        result = result.slice(0, i + 1);
+                        i = j + 1;
                         break;
                     }
                 }
             }
 
-            if (nextChar !== '\n') {
-                result += options.indicator;
-            }
+            return string.slice(0, i) + (nextChar === '\n' ? '' : options.indicator);
         }
+    } else if (numLines > maxLines) {
+        return string.slice(0, i);
     }
 
-    return result;
+    return string;
 }
 
 function indexOfWhiteSpace(string, fromIndex) {
