@@ -71,33 +71,25 @@ function clipHtml(string, maxLength, options) {
 
     const { imageWeight = 2, maxLines } = options;
 
-    let result = '';
-
     let numChars = 1;
     let numLines = 1;
 
+    let i = 0;
     let isUnbreakableContent = false;
     const tagStack = [];
     const { length } = string;
-    for (let i = 0; i < length; i++) {
+    for (; i < length; i++) {
         const rest = (i ? string.slice(i) : string);
         const nextIndex = rest.search(CHAR_OF_INTEREST_REGEX);
-        if (nextIndex > -1) {
-            result += rest.slice(0, nextIndex);
-            if (!isUnbreakableContent) {
-                numChars += nextIndex;
-            }
-            i += nextIndex;
-        } else {
-            result += rest;
-            if (!isUnbreakableContent) {
-                numChars += rest.length;
-            }
-        }
+        const nextBlockSize = (nextIndex > -1 ? nextIndex : rest.length);
+        i += nextBlockSize;
 
-        if (numChars > maxLength) {
-            result = result.slice(0, -(numChars - maxLength));
-            break;
+        if (!isUnbreakableContent) {
+            numChars += nextBlockSize;
+            if (numChars > maxLength) {
+                i -= (numChars - maxLength);
+                break;
+            }
         }
 
         if (nextIndex === -1) {
@@ -108,11 +100,9 @@ function clipHtml(string, maxLength, options) {
         if (charCode === TAG_OPEN_CHAR_CODE) {
             if (string.substr(i + 1, 3) === '!--') {
                 const commentEndIndex = string.indexOf('-->', i + 4) + 3;
-                result += string.slice(i, commentEndIndex);
                 i = commentEndIndex - 1; // - 1 because the outer for loop will increment it
             } else if (string.substr(i + 1, 8) === '![CDATA[') {
                 const cdataEndIndex = string.indexOf(']]>', i + 9) + 3;
-                result += string.slice(i, cdataEndIndex);
                 i = cdataEndIndex - 1; // - 1 because the outer for loop will increment it
 
                 // note we don't count CDATA text for our character limit because it is only
@@ -208,7 +198,6 @@ function clipHtml(string, maxLength, options) {
                             }
                         }
 
-                        result += string.slice(i, endIndex + 1);
                         i = endIndex;
                         break;
                     }
@@ -233,7 +222,6 @@ function clipHtml(string, maxLength, options) {
                 }
             }
 
-            result += string.slice(i, endIndex + 1);
             i = endIndex;
         } else if (charCode === NEWLINE_CHAR_CODE) {
             if (!isUnbreakableContent) {
@@ -247,8 +235,6 @@ function clipHtml(string, maxLength, options) {
                     break;
                 }
             }
-
-            result += String.fromCharCode(charCode);
         } else {
             if (!isUnbreakableContent) {
                 numChars++;
@@ -260,17 +246,14 @@ function clipHtml(string, maxLength, options) {
             // high Unicode surrogate should never be separated from its matching low surrogate
             const nextCharCode = string.charCodeAt(i + 1);
             if ((nextCharCode & 0xfc00) === 0xdc00) {
-                result += String.fromCharCode(charCode, nextCharCode);
                 i++;
-            } else {
-                result += String.fromCharCode(charCode);
             }
         }
     }
 
     if (numChars > maxLength) {
-        let nextChar = takeCharAt(string, result.length);
-        let peekIndex = result.length + nextChar.length;
+        let nextChar = takeCharAt(string, i);
+        let peekIndex = i + nextChar.length;
         while (string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
                string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
             const nextPeekIndex = string.indexOf('>', peekIndex + 2) + 1;
@@ -289,32 +272,29 @@ function clipHtml(string, maxLength, options) {
                 throw new Error('Invalid HTML: ' + string);
             }
 
-            result += nextChar;
-            nextChar = string.charAt(result.length);
+            i += nextChar.length;
+            nextChar = string.charAt(i);
         }
 
         // include closing tags before adding the clipping indicator if that's where they
         // are in the input string
-        let resultLength = result.length;
-        while (nextChar === '<' &&
-               string.charCodeAt(resultLength + 1) === FORWARD_SLASH_CHAR_CODE) {
+        while (nextChar === '<' && string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE) {
             const tagName = tagStack.pop();
-            const tagEndIndex = (tagName ? string.indexOf('>', resultLength + 2) : -1);
+            const tagEndIndex = (tagName ? string.indexOf('>', i + 2) : -1);
             if (tagEndIndex === -1 || string.replace(TRIM_END_REGEX, '')
-                                            .slice(resultLength + 2, tagEndIndex) !== tagName) {
+                                            .slice(i + 2, tagEndIndex) !== tagName) {
                 throw new Error('Invalid HTML: ' + string);
             }
 
-            result += string.slice(resultLength, tagEndIndex + 1);
-            resultLength = result.length;
-            nextChar = string.charAt(resultLength);
+            i = tagEndIndex + 1;
+            nextChar = string.charAt(i);
         }
 
-        if (result.length < string.length) {
+        if (i < string.length) {
             if (!options.breakWords) {
                 // try to clip at word boundaries, if desired
-                for (let i = result.length - 1; i >= 0; i--) {
-                    const charCode = result.charCodeAt(i);
+                for (let j = i - 1; j >= 0; j--) {
+                    const charCode = string.charCodeAt(j);
                     if (charCode === TAG_CLOSE_CHAR_CODE || charCode === SEMICOLON_CHAR_CODE) {
                         // these characters could be just regular characters, so if they occur in
                         // the middle of a word, they would "break" our attempt to prevent breaking
@@ -322,27 +302,32 @@ function clipHtml(string, maxLength, options) {
                         // doing another full parsing of the preceding text, this seems acceptable.
                         break;
                     } else if (charCode === NEWLINE_CHAR_CODE) {
-                        result = result.slice(0, i);
+                        i = j;
                         break;
                     } else if (isWhiteSpace(charCode)) {
-                        result = result.slice(0, i + 1);
+                        i = j + 1;
                         break;
                     }
                 }
             }
 
-            if (!isLineBreak(string, result.length)) {
-                result += options.indicator;
+            let result = string.slice(0, i) + (isLineBreak(string, i) ? '' : options.indicator);
+            while (tagStack.length) {
+                const tagName = tagStack.pop();
+                result += `</${tagName}>`;
             }
+            return result;
         }
+    } else if (numLines > maxLines) {
+        let result = string.slice(0, i);
+        while (tagStack.length) {
+            const tagName = tagStack.pop();
+            result += `</${tagName}>`;
+        }
+        return result;
     }
 
-    while (tagStack.length) {
-        const tagName = tagStack.pop();
-        result += `</${tagName}>`;
-    }
-
-    return result;
+    return string;
 }
 
 function clipPlainText(string, maxLength, options) {

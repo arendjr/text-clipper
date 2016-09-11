@@ -12,6 +12,8 @@ var TAG_OPEN_CHAR_CODE = 60; // '<'
 var EQUAL_SIGN_CHAR_CODE = 61; // '='
 var TAG_CLOSE_CHAR_CODE = 62; // '>'
 
+var CHAR_OF_INTEREST_REGEX = /[<&\n\ud800-\udbff]/;
+
 var TRIM_END_REGEX = /\s+$/;
 
 /**
@@ -82,6 +84,30 @@ function clipHtml(string, maxLength, options) {
     var length = string.length;
 
     for (var i = 0; i < length; i++) {
+        var rest = i ? string.slice(i) : string;
+        var nextIndex = rest.search(CHAR_OF_INTEREST_REGEX);
+        if (nextIndex > -1) {
+            result += rest.slice(0, nextIndex);
+            if (!isUnbreakableContent) {
+                numChars += nextIndex;
+            }
+            i += nextIndex;
+        } else {
+            result += rest;
+            if (!isUnbreakableContent) {
+                numChars += rest.length;
+            }
+        }
+
+        if (numChars > maxLength) {
+            result = result.slice(0, -(numChars - maxLength));
+            break;
+        }
+
+        if (nextIndex === -1) {
+            break;
+        }
+
         var charCode = string.charCodeAt(i);
         if (charCode === TAG_OPEN_CHAR_CODE) {
             if (string.substr(i + 1, 3) === '!--') {
@@ -206,29 +232,35 @@ function clipHtml(string, maxLength, options) {
 
             result += string.slice(i, _endIndex + 1);
             i = _endIndex;
-        } else {
+        } else if (charCode === NEWLINE_CHAR_CODE) {
             if (!isUnbreakableContent) {
                 numChars++;
                 if (numChars > maxLength) {
                     break;
                 }
 
-                if (charCode === NEWLINE_CHAR_CODE) {
-                    numLines++;
-                    if (numLines > maxLines) {
-                        break;
-                    }
+                numLines++;
+                if (numLines > maxLines) {
+                    break;
                 }
             }
 
             result += String.fromCharCode(charCode);
-            if ((charCode & 0xfc00) === 0xd800) {
-                // high Unicode surrogate should never be separated from its matching low surrogate
-                var nextCharCode = string.charCodeAt(i + 1);
-                if ((nextCharCode & 0xfc00) === 0xdc00) {
-                    result += String.fromCharCode(nextCharCode);
-                    i++;
+        } else {
+            if (!isUnbreakableContent) {
+                numChars++;
+                if (numChars > maxLength) {
+                    break;
                 }
+            }
+
+            // high Unicode surrogate should never be separated from its matching low surrogate
+            var nextCharCode = string.charCodeAt(i + 1);
+            if ((nextCharCode & 0xfc00) === 0xdc00) {
+                result += String.fromCharCode(charCode, nextCharCode);
+                i++;
+            } else {
+                result += String.fromCharCode(charCode);
             }
         }
     }
