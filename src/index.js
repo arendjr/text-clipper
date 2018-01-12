@@ -1,5 +1,11 @@
 const VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input',
-                       'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+    'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+
+const NEWLINE_ELEMENTS = ['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div',
+    'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li',
+    'main', 'nav', 'noscript', 'ol', 'output', 'p', 'pre', 'section',
+    'table', 'tfoot', 'ul', 'video'];
 
 const NEWLINE_CHAR_CODE = 10; // '\n'
 const DOUBLE_QUOTE_CHAR_CODE = 34; // '"'
@@ -178,6 +184,14 @@ function clipHtml(string, maxLength, options) {
                                     }
                                 }
                             }
+
+                            if (NEWLINE_ELEMENTS.includes(tagName)) {
+                                numLines++;
+                                if (numLines > maxLines) {
+                                    tagStack.push(currentTagName);
+                                    break;
+                                }
+                            }
                         } else if (VOID_ELEMENTS.includes(tagName) ||
                                    string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
                             if (tagName === 'br') {
@@ -301,7 +315,8 @@ function clipHtml(string, maxLength, options) {
                         // of words, but given this seems highly unlikely and the alternative is
                         // doing another full parsing of the preceding text, this seems acceptable.
                         break;
-                    } else if (charCode === NEWLINE_CHAR_CODE) {
+                    } else if (charCode === NEWLINE_CHAR_CODE ||
+                        charCode === TAG_OPEN_CHAR_CODE) {
                         i = j;
                         break;
                     } else if (isWhiteSpace(charCode)) {
@@ -406,12 +421,17 @@ function indexOfWhiteSpace(string, fromIndex) {
 }
 
 function isLineBreak(string, index) {
+    console.log('In isLineBreak');
 
     const firstCharCode = string.charCodeAt(index);
     if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
     } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
-        return /<br[\t\n\f\r ]*\/?>/i.test(string.slice(index));
+        var newlineElements = '(' + NEWLINE_ELEMENTS.join('|') + ')';
+        var newlineRegExp = new RegExp('<' + newlineElements + '[\t\n\f\r ]*\/?>', 'i');
+        console.log('Testing html newline: ' + firstCharCode);
+        // return /<br[\t\n\f\r ]*\/?>/i.test(string.slice(index));
+        return newlineRegExp.test(string.slice(index));
     } else {
         return false;
     }

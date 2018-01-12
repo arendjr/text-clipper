@@ -23,7 +23,6 @@
         "generator-star-spacing": [2, { "before": true, "after": false }],
         "jsx-quotes": [2, "prefer-single"],
         "key-spacing": 2,
-        "linebreak-style": [2, "unix"],
         "max-len": [2, 100, 4],
         "new-cap": 2,
         "no-catch-shadow": 2,
