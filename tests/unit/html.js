@@ -183,7 +183,7 @@ tape('html: test word breaking', function(test) {
 });
 
 tape('html: test max lines', function(test) {
-    test.plan(8);
+    test.plan(10);
 
     test.equal(clip('Lorum\nipsum', 100, { html: true, maxLines: 2 }), 'Lorum\nipsum');
     test.equal(clip('Lorum\nipsum', 100, { html: true, maxLines: 1 }), 'Lorum');
@@ -197,6 +197,10 @@ tape('html: test max lines', function(test) {
         { html: true, maxLines: 2 }), '<p>Lorem ipsum</p><p>Lorem ipsum</p>');
     test.equal(clip('<p>Lorem ipsum</p><p>Lorem ipsum</p>', 100,
         { html: true, maxLines: 1 }), '<p>Lorem ipsum</p>');
+    test.equal(clip('<div>Lorem ipsum</div><div>Lorem ipsum</div>', 100,
+        { html: true, maxLines: 2 }), '<div>Lorem ipsum</div><div>Lorem ipsum</div>');
+    test.equal(clip('<div>Lorem ipsum</div><div>Lorem ipsum</div>', 100,
+        { html: true, maxLines: 1 }), '<div>Lorem ipsum</div>');
 });
 
 tape('html: test odd HTML', function(test) {

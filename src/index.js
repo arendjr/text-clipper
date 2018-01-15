@@ -1,7 +1,7 @@
 const VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input',
     'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
 
-const NEWLINE_ELEMENTS = ['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div',
+const BLOCK_ELEMENTS = ['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div',
     'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
     'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li',
     'main', 'nav', 'noscript', 'ol', 'output', 'p', 'pre', 'section',
@@ -165,8 +165,12 @@ function clipHtml(string, maxLength, options) {
                             indexOfWhiteSpace(string, tagNameStartIndex),
                             endIndex
                         );
-                        const tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
-                                              .toLowerCase();
+                        let tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
+                                                .toLowerCase();
+                        if (tagName.charCodeAt(tagName.length - 1) === FORWARD_SLASH_CHAR_CODE) {
+                            // Remove trailing slash for self-closing tag names like <br/>
+                            tagName = tagName.slice(0, tagName.length - 1);
+                        }
 
                         if (isEndTag) {
                             const currentTagName = tagStack.pop();
@@ -185,15 +189,22 @@ function clipHtml(string, maxLength, options) {
                                 }
                             }
 
-                            if (NEWLINE_ELEMENTS.includes(tagName)) {
-                                numLines++;
-                                if (numLines > maxLines) {
-                                    tagStack.push(currentTagName);
-                                    break;
+                            if (BLOCK_ELEMENTS.includes(tagName)) {
+                                // All block level elements should trigger a new line
+                                // when truncating
+                                if (!isUnbreakableContent) {
+                                    numLines++;
+                                    if (numLines > maxLines) {
+                                        // If we exceed the max lines, push the tag back onto the
+                                        // stack so that it will be added back correctly after
+                                        // truncation
+                                        tagStack.push(tagName);
+                                        break;
+                                    }
                                 }
                             }
                         } else if (VOID_ELEMENTS.includes(tagName) ||
-                                   string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
+                                string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
                             if (tagName === 'br') {
                                 numLines++;
                                 if (numLines > maxLines) {
@@ -421,16 +432,12 @@ function indexOfWhiteSpace(string, fromIndex) {
 }
 
 function isLineBreak(string, index) {
-    console.log('In isLineBreak');
-
     const firstCharCode = string.charCodeAt(index);
     if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
     } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
-        var newlineElements = '(' + NEWLINE_ELEMENTS.join('|') + ')';
+        var newlineElements = '(' + BLOCK_ELEMENTS.join('|') + '|' + 'br)';
         var newlineRegExp = new RegExp('<' + newlineElements + '[\t\n\f\r ]*\/?>', 'i');
-        console.log('Testing html newline: ' + firstCharCode);
-        // return /<br[\t\n\f\r ]*\/?>/i.test(string.slice(index));
         return newlineRegExp.test(string.slice(index));
     } else {
         return false;
