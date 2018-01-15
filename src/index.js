@@ -69,7 +69,7 @@ module.exports = function clip(string, maxLength, options = {}) {
     }
 
     return (options.html ? clipHtml(string, maxLength, options)
-                         : clipPlainText(string, maxLength, options));
+        : clipPlainText(string, maxLength, options));
 };
 
 
@@ -166,7 +166,7 @@ function clipHtml(string, maxLength, options) {
                             endIndex
                         );
                         let tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
-                                                .toLowerCase();
+                            .toLowerCase();
                         if (tagName.charCodeAt(tagName.length - 1) === FORWARD_SLASH_CHAR_CODE) {
                             // Remove trailing slash for self-closing tag names like <br/>
                             tagName = tagName.slice(0, tagName.length - 1);
@@ -307,7 +307,7 @@ function clipHtml(string, maxLength, options) {
             const tagName = tagStack.pop();
             const tagEndIndex = (tagName ? string.indexOf('>', i + 2) : -1);
             if (tagEndIndex === -1 || string.replace(TRIM_END_REGEX, '')
-                                            .slice(i + 2, tagEndIndex) !== tagName) {
+                .slice(i + 2, tagEndIndex) !== tagName) {
                 throw new Error('Invalid HTML: ' + string);
             }
 
@@ -437,7 +437,7 @@ function isLineBreak(string, index) {
         return true;
     } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
         var newlineElements = '(' + BLOCK_ELEMENTS.join('|') + '|' + 'br)';
-        var newlineRegExp = new RegExp('<' + newlineElements + '[\t\n\f\r ]*\/?>', 'i');
+        var newlineRegExp = new RegExp('<' + newlineElements + '[\t\n\f\r ]*/?>', 'i');
         return newlineRegExp.test(string.slice(index));
     } else {
         return false;
