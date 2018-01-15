@@ -209,5 +209,5 @@ tape('html: test odd HTML', function(test) {
     const options = { html: true };
 
     test.equal(clip('<p><i>Lorum>>></i> <i>ipsum</i></p>', 7, options),
-        '<p><i>Lorum>\u2026</i></p>');
+               '<p><i>Lorum>\u2026</i></p>');
 });

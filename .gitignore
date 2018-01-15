@@ -2,3 +2,4 @@ dist
 node_modules
 text-clipper.sublime-workspace
 .vscode
+package-lock.json

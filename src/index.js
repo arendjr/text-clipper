@@ -1,5 +1,5 @@
 const VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input',
-    'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+                       'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
 
 const BLOCK_ELEMENTS = ['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div',
     'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
@@ -69,7 +69,7 @@ module.exports = function clip(string, maxLength, options = {}) {
     }
 
     return (options.html ? clipHtml(string, maxLength, options)
-        : clipPlainText(string, maxLength, options));
+                         : clipPlainText(string, maxLength, options));
 };
 
 
@@ -166,7 +166,7 @@ function clipHtml(string, maxLength, options) {
                             endIndex
                         );
                         let tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
-                            .toLowerCase();
+                                            .toLowerCase();
                         if (tagName.charCodeAt(tagName.length - 1) === FORWARD_SLASH_CHAR_CODE) {
                             // Remove trailing slash for self-closing tag names like <br/>
                             tagName = tagName.slice(0, tagName.length - 1);
@@ -204,7 +204,7 @@ function clipHtml(string, maxLength, options) {
                                 }
                             }
                         } else if (VOID_ELEMENTS.includes(tagName) ||
-                                string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
+                                   string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
                             if (tagName === 'br') {
                                 numLines++;
                                 if (numLines > maxLines) {
@@ -307,7 +307,7 @@ function clipHtml(string, maxLength, options) {
             const tagName = tagStack.pop();
             const tagEndIndex = (tagName ? string.indexOf('>', i + 2) : -1);
             if (tagEndIndex === -1 || string.replace(TRIM_END_REGEX, '')
-                .slice(i + 2, tagEndIndex) !== tagName) {
+                                            .slice(i + 2, tagEndIndex) !== tagName) {
                 throw new Error('Invalid HTML: ' + string);
             }
 
