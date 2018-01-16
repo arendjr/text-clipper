@@ -75,5 +75,6 @@ Maximum amount of lines allowed. If given, the string will be clipped either at 
 maximum amount of characters is exceeded or the moment maxLines newlines are discovered, whichever
 comes first.
 
-Note when in HTML mode, text-clipper assumes the text will be displayed with a CSS white-space
-setting that treats `\n` as a line break. Of course the HTML tag `<br>` is also counted.
+Note when in HTML mode, block-level elements trigger newlines and text-clipper assumes the text
+will be displayed with a CSS white-space setting that treats `\n` as a line break. Of course the
+HTML tag `<br>` is also counted.
