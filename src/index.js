@@ -1,6 +1,12 @@
 const VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input',
                        'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
 
+const BLOCK_ELEMENTS = ['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div',
+    'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
+    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li',
+    'main', 'nav', 'noscript', 'ol', 'output', 'p', 'pre', 'section',
+    'table', 'tfoot', 'ul', 'video'];
+
 const NEWLINE_CHAR_CODE = 10; // '\n'
 const DOUBLE_QUOTE_CHAR_CODE = 34; // '"'
 const AMPERSAND_CHAR_CODE = 38; // '&'
@@ -159,8 +165,12 @@ function clipHtml(string, maxLength, options) {
                             indexOfWhiteSpace(string, tagNameStartIndex),
                             endIndex
                         );
-                        const tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
-                                              .toLowerCase();
+                        let tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
+                                            .toLowerCase();
+                        if (tagName.charCodeAt(tagName.length - 1) === FORWARD_SLASH_CHAR_CODE) {
+                            // Remove trailing slash for self-closing tag names like <br/>
+                            tagName = tagName.slice(0, tagName.length - 1);
+                        }
 
                         if (isEndTag) {
                             const currentTagName = tagStack.pop();
@@ -174,6 +184,21 @@ function clipHtml(string, maxLength, options) {
                                 if (!isUnbreakableContent) {
                                     numChars += imageWeight;
                                     if (numChars > maxLength) {
+                                        break;
+                                    }
+                                }
+                            }
+
+                            if (BLOCK_ELEMENTS.includes(tagName)) {
+                                // All block level elements should trigger a new line
+                                // when truncating
+                                if (!isUnbreakableContent) {
+                                    numLines++;
+                                    if (numLines > maxLines) {
+                                        // If we exceed the max lines, push the tag back onto the
+                                        // stack so that it will be added back correctly after
+                                        // truncation
+                                        tagStack.push(tagName);
                                         break;
                                     }
                                 }
@@ -301,7 +326,8 @@ function clipHtml(string, maxLength, options) {
                         // of words, but given this seems highly unlikely and the alternative is
                         // doing another full parsing of the preceding text, this seems acceptable.
                         break;
-                    } else if (charCode === NEWLINE_CHAR_CODE) {
+                    } else if (charCode === NEWLINE_CHAR_CODE ||
+                        charCode === TAG_OPEN_CHAR_CODE) {
                         i = j;
                         break;
                     } else if (isWhiteSpace(charCode)) {
@@ -406,12 +432,13 @@ function indexOfWhiteSpace(string, fromIndex) {
 }
 
 function isLineBreak(string, index) {
-
     const firstCharCode = string.charCodeAt(index);
     if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
     } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
-        return /<br[\t\n\f\r ]*\/?>/i.test(string.slice(index));
+        var newlineElements = '(' + BLOCK_ELEMENTS.join('|') + '|' + 'br)';
+        var newlineRegExp = new RegExp('<' + newlineElements + '[\t\n\f\r ]*/?>', 'i');
+        return newlineRegExp.test(string.slice(index));
     } else {
         return false;
     }
