@@ -1,2 +1,6 @@
+.babelrc
+.eslintrc
 src
 tests
+text-clipper.sublime-*
+yarn.lock
