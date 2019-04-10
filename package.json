@@ -1,46 +1,47 @@
 {
-  "name": "text-clipper",
-  "version": "1.2.2",
-  "description": "Fast and correct clip functions for HTML and plain text.",
-  "main": "dist/index.js",
-  "scripts": {
-    "build": "babel src --presets babel-preset-es2017 --out-dir dist",
-    "lint": "eslint src tests/unit",
-    "prepublish": "npm run build",
-    "test": "tape -r babel-register tests/unit/*.js | faucet"
-  },
-  "author": "Speakap B.V.",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/arendjr/text-clipper.git"
-  },
-  "keywords": [
-    "clip",
-    "html",
-    "string",
-    "text",
-    "trim",
-    "truncate"
-  ],
-  "license": "MIT",
-  "devDependencies": {
-    "babel-cli": "^6.14.0",
-    "babel-plugin-array-includes": "^2.0.3",
-    "babel-preset-es2017": "^6.24.1",
-    "babel-register": "^6.14.0",
-    "eslint": "^5.16.0",
-    "eslint-config-prettier": "^4.1.0",
-    "eslint-plugin-prettier": "^3.0.1",
-    "faucet": "0.0.1",
-    "glob": "^7.0.6",
-    "prepush": "^3.1.11",
-    "prettier": "^1.16.4",
-    "tape": "^4.6.0"
-  },
-  "prepush": {
-    "tasks": [
-      "npm run lint",
-      "npm test"
-    ]
-  }
+    "name": "text-clipper",
+    "version": "1.2.3",
+    "description": "Fast and correct clip functions for HTML and plain text.",
+    "main": "dist/index.js",
+    "scripts": {
+        "build": "babel src --presets babel-preset-es2015,babel-preset-es2017 --out-dir dist",
+        "lint": "eslint src tests/unit",
+        "prepublish": "npm run build",
+        "test": "tape -r babel-register tests/unit/*.js | faucet"
+    },
+    "author": "Speakap B.V.",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/arendjr/text-clipper.git"
+    },
+    "keywords": [
+        "clip",
+        "html",
+        "string",
+        "text",
+        "trim",
+        "truncate"
+    ],
+    "license": "MIT",
+    "devDependencies": {
+        "babel-cli": "^6.14.0",
+        "babel-plugin-array-includes": "^2.0.3",
+        "babel-preset-es2015": "^6.24.1",
+        "babel-preset-es2017": "^6.24.1",
+        "babel-register": "^6.14.0",
+        "eslint": "^5.16.0",
+        "eslint-config-prettier": "^4.1.0",
+        "eslint-plugin-prettier": "^3.0.1",
+        "faucet": "0.0.1",
+        "glob": "^7.0.6",
+        "prepush": "^3.1.11",
+        "prettier": "^1.16.4",
+        "tape": "^4.6.0"
+    },
+    "prepush": {
+        "tasks": [
+            "npm run lint",
+            "npm test"
+        ]
+    }
 }
