@@ -173,7 +173,7 @@ function clipHtml(string, maxLength, options) {
                 let attributeQuoteCharCode = 0;
                 let endIndex = i;
                 let isAttributeValue = false;
-                while (true) { // eslint-disable-line
+                while (true /* eslint-disable-line */) {
                     endIndex++;
                     if (endIndex >= length) {
                         throw new Error(`Invalid HTML: ${string}`);
@@ -287,10 +287,16 @@ function clipHtml(string, maxLength, options) {
             }
         } else if (charCode === AMPERSAND_CHAR_CODE) {
             let endIndex = i + 1;
-            while (string.charCodeAt(endIndex) !== SEMICOLON_CHAR_CODE) {
-                endIndex++;
-                if (endIndex >= length) {
-                    throw new Error(`Invalid HTML: ${string}`);
+            let isCharacterReference = true;
+            while (true /* eslint-disable-line */) {
+                const charCode = string.charCodeAt(endIndex);
+                if (isCharacterReferenceCharacter(charCode)) {
+                    endIndex++;
+                } else if (charCode === SEMICOLON_CHAR_CODE) {
+                    break;
+                } else {
+                    isCharacterReference = false;
+                    break;
                 }
             }
 
@@ -301,7 +307,9 @@ function clipHtml(string, maxLength, options) {
                 }
             }
 
-            i = endIndex;
+            if (isCharacterReference) {
+                i = endIndex;
+            }
         } else if (charCode === NEWLINE_CHAR_CODE) {
             if (!isUnbreakableContent) {
                 numChars++;
@@ -331,7 +339,7 @@ function clipHtml(string, maxLength, options) {
     }
 
     if (numChars > maxLength) {
-        let nextChar = takeCharAt(string, i);
+        let nextChar = takeHtmlCharAt(string, i);
         if (indicator) {
             let peekIndex = i + nextChar.length;
             while (
@@ -350,10 +358,6 @@ function clipHtml(string, maxLength, options) {
                 // if there's only a single character remaining in the input string, or the next
                 // character is followed by a line-break, we can include it instead of the clipping
                 // indicator (provided it's not a special HTML character)
-                if (nextChar === "<" || nextChar === "&") {
-                    throw new Error(`Invalid HTML: ${string}`);
-                }
-
                 i += nextChar.length;
                 nextChar = string.charAt(i);
             }
@@ -378,7 +382,7 @@ function clipHtml(string, maxLength, options) {
         if (i < string.length) {
             if (!options.breakWords) {
                 // try to clip at word boundaries, if desired
-                for (let j = i - 1; j >= 0; j--) {
+                for (let j = i - indicator.length; j >= 0; j--) {
                     const charCode = string.charCodeAt(j);
                     if (charCode === TAG_CLOSE_CHAR_CODE || charCode === SEMICOLON_CHAR_CODE) {
                         // these characters could be just regular characters, so if they occur in
@@ -390,7 +394,7 @@ function clipHtml(string, maxLength, options) {
                         i = j;
                         break;
                     } else if (isWhiteSpace(charCode)) {
-                        i = j + 1;
+                        i = j + (indicator ? 1 : 0);
                         break;
                     }
                 }
@@ -457,14 +461,14 @@ function clipPlainText(string, maxLength, options) {
 
         if (!options.breakWords) {
             // try to clip at word boundaries, if desired
-            for (let j = i - 1; j >= 0; j--) {
+            for (let j = i - indicator.length; j >= 0; j--) {
                 const charCode = string.charCodeAt(j);
                 if (charCode === NEWLINE_CHAR_CODE) {
                     i = j;
                     nextChar = "\n";
                     break;
                 } else if (isWhiteSpace(charCode)) {
-                    i = j + 1;
+                    i = j + (indicator ? 1 : 0);
                     break;
                 }
             }
@@ -488,6 +492,14 @@ function indexOfWhiteSpace(string, fromIndex) {
     // rather than -1, this function returns the length of the string if no match is found,
     // so it works well with the Math.min() usage below
     return length;
+}
+
+function isCharacterReferenceCharacter(charCode) {
+    return (
+        (charCode >= 48 && charCode <= 57) ||
+        (charCode >= 65 && charCode <= 90) ||
+        (charCode >= 97 && charCode <= 122)
+    );
 }
 
 function isLineBreak(string, index) {
@@ -519,4 +531,23 @@ function takeCharAt(string, index) {
         }
     }
     return String.fromCharCode(charCode);
+}
+
+function takeHtmlCharAt(string, index) {
+    let char = takeCharAt(string, index);
+    if (char === "&") {
+        while (true /* eslint-disable-line */) {
+            index++;
+            const nextCharCode = string.charCodeAt(index);
+            if (isCharacterReferenceCharacter(nextCharCode)) {
+                char += String.fromCharCode(nextCharCode);
+            } else if (nextCharCode === SEMICOLON_CHAR_CODE) {
+                char += String.fromCharCode(nextCharCode);
+                break;
+            } else {
+                break;
+            }
+        }
+    }
+    return char;
 }

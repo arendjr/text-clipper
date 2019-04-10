@@ -226,12 +226,120 @@ tape("html: test max lines", function(test) {
 });
 
 tape("html: test odd HTML", function(test) {
-    test.plan(1);
+    test.plan(2);
 
     const options = { html: true };
 
+    test.equal(clip("<p>foo > bar</p>", 9, options), "<p>foo > bar</p>");
     test.equal(
         clip("<p><i>Lorum>>></i> <i>ipsum</i></p>", 7, options),
         "<p><i>Lorum>\u2026</i></p>",
     );
+});
+
+tape("html: test ampersand", function(test) {
+    test.plan(23);
+
+    const options = { html: true };
+
+    test.equal(clip("&", 1, options), "&");
+    test.equal(clip("&", 2, options), "&");
+    test.equal(clip("&lt;", 1, options), "&lt;");
+    test.equal(clip("&lt;", 2, options), "&lt;");
+    test.equal(clip("&amp;", 1, options), "&amp;");
+    test.equal(clip("&amp;", 2, options), "&amp;");
+    test.equal(clip("<p>&</p>", 1, options), "");
+    test.equal(clip("<p>&</p>", 2, options), "<p>&</p>");
+    test.equal(clip("<p>&lt;</p>", 1, options), "");
+    test.equal(clip("<p>&lt;</p>", 2, options), "<p>&lt;</p>");
+    test.equal(clip("<p>&amp;</p>", 1, options), "");
+    test.equal(clip("<p>&amp;</p>", 2, options), "<p>&amp;</p>");
+
+    test.equal(clip("foo & bar", 5, options), "foo \u2026");
+    test.equal(clip("foo & bar", 9, options), "foo & bar");
+    test.equal(clip("foo&<i>bar</i>", 5, options), "foo&\u2026");
+    test.equal(clip("foo&<i>bar</i>", 7, options), "foo&<i>bar</i>");
+    test.equal(clip("foo&&& bar", 5, options), "foo&\u2026");
+    test.equal(clip("foo&&& bar", 10, options), "foo&&& bar");
+
+    test.equal(
+        clip('<a href="http://example.com/?x=1&y=2">foo</a>', 3, options),
+        '<a href="http://example.com/?x=1&y=2">foo</a>',
+    );
+    test.equal(clip("&123", 4, options), "&123");
+    test.equal(clip("&abc", 4, options), "&abc");
+    test.equal(clip("foo &0 bar", 10, options), "foo &0 bar");
+    test.equal(clip("foo &lolwat bar", 15, options), "foo &lolwat bar");
+});
+
+tape("html: test ampersand without indicator", function(test) {
+    test.plan(23);
+
+    const options = { html: true, indicator: "" };
+
+    test.equal(clip("&", 1, options), "&");
+    test.equal(clip("&", 2, options), "&");
+    test.equal(clip("&lt;", 1, options), "&lt;");
+    test.equal(clip("&lt;", 2, options), "&lt;");
+    test.equal(clip("&amp;", 1, options), "&amp;");
+    test.equal(clip("&amp;", 2, options), "&amp;");
+    test.equal(clip("<p>&</p>", 1, options), "<p>&</p>");
+    test.equal(clip("<p>&</p>", 2, options), "<p>&</p>");
+    test.equal(clip("<p>&lt;</p>", 1, options), "<p>&lt;</p>");
+    test.equal(clip("<p>&lt;</p>", 2, options), "<p>&lt;</p>");
+    test.equal(clip("<p>&amp;</p>", 1, options), "<p>&amp;</p>");
+    test.equal(clip("<p>&amp;</p>", 2, options), "<p>&amp;</p>");
+
+    test.equal(clip("foo & bar", 5, options), "foo &");
+    test.equal(clip("foo & bar", 9, options), "foo & bar");
+    // Ideally "bar" wouldn't have been broken, but we accept this
+    // limitation when encountering tags during backtracking:
+    test.equal(clip("foo&<i>bar</i>", 5, options), "foo&<i>b</i>");
+    test.equal(clip("foo&<i>bar</i>", 7, options), "foo&<i>bar</i>");
+    test.equal(clip("foo&&& bar", 5, options), "foo&&");
+    test.equal(clip("foo&&& bar", 10, options), "foo&&& bar");
+
+    test.equal(
+        clip('<a href="http://example.com/?x=1&y=2">foo</a>', 3, options),
+        '<a href="http://example.com/?x=1&y=2">foo</a>',
+    );
+    test.equal(clip("&123", 4, options), "&123");
+    test.equal(clip("&abc", 4, options), "&abc");
+    test.equal(clip("foo &0 bar", 10, options), "foo &0 bar");
+    test.equal(clip("foo &lolwat bar", 15, options), "foo &lolwat bar");
+});
+
+tape("html: test ampersand without indicator and break words", function(test) {
+    test.plan(23);
+
+    const options = { breakWords: true, html: true, indicator: "" };
+
+    test.equal(clip("&", 1, options), "&");
+    test.equal(clip("&", 2, options), "&");
+    test.equal(clip("&lt;", 1, options), "&lt;");
+    test.equal(clip("&lt;", 2, options), "&lt;");
+    test.equal(clip("&amp;", 1, options), "&amp;");
+    test.equal(clip("&amp;", 2, options), "&amp;");
+    test.equal(clip("<p>&</p>", 1, options), "<p>&</p>");
+    test.equal(clip("<p>&</p>", 2, options), "<p>&</p>");
+    test.equal(clip("<p>&lt;</p>", 1, options), "<p>&lt;</p>");
+    test.equal(clip("<p>&lt;</p>", 2, options), "<p>&lt;</p>");
+    test.equal(clip("<p>&amp;</p>", 1, options), "<p>&amp;</p>");
+    test.equal(clip("<p>&amp;</p>", 2, options), "<p>&amp;</p>");
+
+    test.equal(clip("foo & bar", 5, options), "foo &");
+    test.equal(clip("foo & bar", 9, options), "foo & bar");
+    test.equal(clip("foo&<i>bar</i>", 5, options), "foo&<i>b</i>");
+    test.equal(clip("foo&<i>bar</i>", 7, options), "foo&<i>bar</i>");
+    test.equal(clip("foo&&& bar", 5, options), "foo&&");
+    test.equal(clip("foo&&& bar", 10, options), "foo&&& bar");
+
+    test.equal(
+        clip('<a href="http://example.com/?x=1&y=2">foo</a>', 3, options),
+        '<a href="http://example.com/?x=1&y=2">foo</a>',
+    );
+    test.equal(clip("&123", 4, options), "&123");
+    test.equal(clip("&abc", 4, options), "&abc");
+    test.equal(clip("foo &0 bar", 10, options), "foo &0 bar");
+    test.equal(clip("foo &lolwat bar", 15, options), "foo &lolwat bar");
 });
