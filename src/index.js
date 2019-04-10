@@ -1,11 +1,60 @@
-const VOID_ELEMENTS = ['area', 'base', 'br', 'col', 'command', 'embed', 'hr', 'img', 'input',
-                       'keygen', 'link', 'meta', 'param', 'source', 'track', 'wbr'];
+const VOID_ELEMENTS = [
+    "area",
+    "base",
+    "br",
+    "col",
+    "command",
+    "embed",
+    "hr",
+    "img",
+    "input",
+    "keygen",
+    "link",
+    "meta",
+    "param",
+    "source",
+    "track",
+    "wbr",
+];
 
-const BLOCK_ELEMENTS = ['address', 'article', 'aside', 'blockquote', 'canvas', 'dd', 'div',
-    'dl', 'dt', 'fieldset', 'figcaption', 'figure', 'footer', 'form',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'header', 'hgroup', 'hr', 'li',
-    'main', 'nav', 'noscript', 'ol', 'output', 'p', 'pre', 'section',
-    'table', 'tfoot', 'ul', 'video'];
+const BLOCK_ELEMENTS = [
+    "address",
+    "article",
+    "aside",
+    "blockquote",
+    "canvas",
+    "dd",
+    "div",
+    "dl",
+    "dt",
+    "fieldset",
+    "figcaption",
+    "figure",
+    "footer",
+    "form",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "header",
+    "hgroup",
+    "hr",
+    "li",
+    "main",
+    "nav",
+    "noscript",
+    "ol",
+    "output",
+    "p",
+    "pre",
+    "section",
+    "table",
+    "tfoot",
+    "ul",
+    "video",
+];
 
 const NEWLINE_CHAR_CODE = 10; // '\n'
 const DOUBLE_QUOTE_CHAR_CODE = 34; // '"'
@@ -57,24 +106,22 @@ const TRIM_END_REGEX = /\s+$/;
  * @return The clipped string.
  */
 module.exports = function clip(string, maxLength, options = {}) {
-
     if (!string) {
-        return '';
+        return "";
     }
 
     string = string.toString();
 
     if (options.indicator === undefined) {
-        options.indicator = '\u2026';
+        options.indicator = "\u2026";
     }
 
-    return (options.html ? clipHtml(string, maxLength, options)
-                         : clipPlainText(string, maxLength, options));
+    return options.html
+        ? clipHtml(string, maxLength, options)
+        : clipPlainText(string, maxLength, options);
 };
 
-
 function clipHtml(string, maxLength, options) {
-
     const { imageWeight = 2, maxLines } = options;
 
     let numChars = 1;
@@ -85,15 +132,15 @@ function clipHtml(string, maxLength, options) {
     const tagStack = [];
     const { length } = string;
     for (; i < length; i++) {
-        const rest = (i ? string.slice(i) : string);
+        const rest = i ? string.slice(i) : string;
         const nextIndex = rest.search(CHAR_OF_INTEREST_REGEX);
-        const nextBlockSize = (nextIndex > -1 ? nextIndex : rest.length);
+        const nextBlockSize = nextIndex > -1 ? nextIndex : rest.length;
         i += nextBlockSize;
 
         if (!isUnbreakableContent) {
             numChars += nextBlockSize;
             if (numChars > maxLength) {
-                i -= (numChars - maxLength);
+                i -= numChars - maxLength;
                 break;
             }
         }
@@ -104,19 +151,21 @@ function clipHtml(string, maxLength, options) {
 
         const charCode = string.charCodeAt(i);
         if (charCode === TAG_OPEN_CHAR_CODE) {
-            if (string.substr(i + 1, 3) === '!--') {
-                const commentEndIndex = string.indexOf('-->', i + 4) + 3;
+            if (string.substr(i + 1, 3) === "!--") {
+                const commentEndIndex = string.indexOf("-->", i + 4) + 3;
                 i = commentEndIndex - 1; // - 1 because the outer for loop will increment it
-            } else if (string.substr(i + 1, 8) === '![CDATA[') {
-                const cdataEndIndex = string.indexOf(']]>', i + 9) + 3;
+            } else if (string.substr(i + 1, 8) === "![CDATA[") {
+                const cdataEndIndex = string.indexOf("]]>", i + 9) + 3;
                 i = cdataEndIndex - 1; // - 1 because the outer for loop will increment it
 
                 // note we don't count CDATA text for our character limit because it is only
                 // allowed within SVG and MathML content, both of which we don't clip
             } else {
                 // don't open new tags if we are currently at the limit
-                if (numChars === maxLength &&
-                    string.charCodeAt(i + 1) !== FORWARD_SLASH_CHAR_CODE) {
+                if (
+                    numChars === maxLength &&
+                    string.charCodeAt(i + 1) !== FORWARD_SLASH_CHAR_CODE
+                ) {
                     numChars++;
                     break;
                 }
@@ -127,7 +176,7 @@ function clipHtml(string, maxLength, options) {
                 while (true) { // eslint-disable-line
                     endIndex++;
                     if (endIndex >= length) {
-                        throw new Error('Invalid HTML: ' + string);
+                        throw new Error(`Invalid HTML: ${string}`);
                     }
 
                     const charCode = string.charCodeAt(endIndex);
@@ -151,22 +200,25 @@ function clipHtml(string, maxLength, options) {
                         isAttributeValue = true;
 
                         const firstAttributeCharCode = string.charCodeAt(endIndex + 1);
-                        if (firstAttributeCharCode === DOUBLE_QUOTE_CHAR_CODE ||
-                            firstAttributeCharCode === SINGLE_QUOTE_CHAR_CODE) {
+                        if (
+                            firstAttributeCharCode === DOUBLE_QUOTE_CHAR_CODE ||
+                            firstAttributeCharCode === SINGLE_QUOTE_CHAR_CODE
+                        ) {
                             attributeQuoteCharCode = firstAttributeCharCode;
                             endIndex++;
                         } else {
                             attributeQuoteCharCode = 0;
                         }
                     } else if (charCode === TAG_CLOSE_CHAR_CODE) {
-                        const isEndTag = (string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE);
+                        const isEndTag = string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE;
                         const tagNameStartIndex = i + (isEndTag ? 2 : 1);
                         const tagNameEndIndex = Math.min(
                             indexOfWhiteSpace(string, tagNameStartIndex),
-                            endIndex
+                            endIndex,
                         );
-                        let tagName = string.slice(tagNameStartIndex, tagNameEndIndex)
-                                            .toLowerCase();
+                        let tagName = string
+                            .slice(tagNameStartIndex, tagNameEndIndex)
+                            .toLowerCase();
                         if (tagName.charCodeAt(tagName.length - 1) === FORWARD_SLASH_CHAR_CODE) {
                             // Remove trailing slash for self-closing tag names like <br/>
                             tagName = tagName.slice(0, tagName.length - 1);
@@ -175,12 +227,12 @@ function clipHtml(string, maxLength, options) {
                         if (isEndTag) {
                             const currentTagName = tagStack.pop();
                             if (currentTagName !== tagName) {
-                                throw new Error('Invalid HTML: ' + string);
+                                throw new Error(`Invalid HTML: ${string}`);
                             }
 
-                            if (tagName === 'math' || tagName === 'svg') {
-                                isUnbreakableContent = (tagStack.includes('math') ||
-                                                        tagStack.includes('svg'));
+                            if (tagName === "math" || tagName === "svg") {
+                                isUnbreakableContent =
+                                    tagStack.includes("math") || tagStack.includes("svg");
                                 if (!isUnbreakableContent) {
                                     numChars += imageWeight;
                                     if (numChars > maxLength) {
@@ -203,14 +255,16 @@ function clipHtml(string, maxLength, options) {
                                     }
                                 }
                             }
-                        } else if (VOID_ELEMENTS.includes(tagName) ||
-                                   string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
-                            if (tagName === 'br') {
+                        } else if (
+                            VOID_ELEMENTS.includes(tagName) ||
+                            string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE
+                        ) {
+                            if (tagName === "br") {
                                 numLines++;
                                 if (numLines > maxLines) {
                                     break;
                                 }
-                            } else if (tagName === 'img') {
+                            } else if (tagName === "img") {
                                 numChars += imageWeight;
                                 if (numChars > maxLength) {
                                     break;
@@ -218,7 +272,7 @@ function clipHtml(string, maxLength, options) {
                             }
                         } else {
                             tagStack.push(tagName);
-                            if (tagName === 'math' || tagName === 'svg') {
+                            if (tagName === "math" || tagName === "svg") {
                                 isUnbreakableContent = true;
                             }
                         }
@@ -236,7 +290,7 @@ function clipHtml(string, maxLength, options) {
             while (string.charCodeAt(endIndex) !== SEMICOLON_CHAR_CODE) {
                 endIndex++;
                 if (endIndex >= length) {
-                    throw new Error('Invalid HTML: ' + string);
+                    throw new Error(`Invalid HTML: ${string}`);
                 }
             }
 
@@ -279,9 +333,11 @@ function clipHtml(string, maxLength, options) {
     if (numChars > maxLength) {
         let nextChar = takeCharAt(string, i);
         let peekIndex = i + nextChar.length;
-        while (string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
-               string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
-            const nextPeekIndex = string.indexOf('>', peekIndex + 2) + 1;
+        while (
+            string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
+            string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE
+        ) {
+            const nextPeekIndex = string.indexOf(">", peekIndex + 2) + 1;
             if (nextPeekIndex) {
                 peekIndex = nextPeekIndex;
             } else {
@@ -293,8 +349,8 @@ function clipHtml(string, maxLength, options) {
             // if there's only a single character remaining in the input string, or the next
             // character is followed by a line-break, we can include it instead of the clipping
             // indicator (provided it's not a special HTML character)
-            if (nextChar === '<' || nextChar === '&') {
-                throw new Error('Invalid HTML: ' + string);
+            if (nextChar === "<" || nextChar === "&") {
+                throw new Error(`Invalid HTML: ${string}`);
             }
 
             i += nextChar.length;
@@ -303,12 +359,14 @@ function clipHtml(string, maxLength, options) {
 
         // include closing tags before adding the clipping indicator if that's where they
         // are in the input string
-        while (nextChar === '<' && string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE) {
+        while (nextChar === "<" && string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE) {
             const tagName = tagStack.pop();
-            const tagEndIndex = (tagName ? string.indexOf('>', i + 2) : -1);
-            if (tagEndIndex === -1 || string.replace(TRIM_END_REGEX, '')
-                                            .slice(i + 2, tagEndIndex) !== tagName) {
-                throw new Error('Invalid HTML: ' + string);
+            const tagEndIndex = tagName ? string.indexOf(">", i + 2) : -1;
+            if (
+                tagEndIndex === -1 ||
+                string.replace(TRIM_END_REGEX, "").slice(i + 2, tagEndIndex) !== tagName
+            ) {
+                throw new Error(`Invalid HTML: ${string}`);
             }
 
             i = tagEndIndex + 1;
@@ -326,8 +384,7 @@ function clipHtml(string, maxLength, options) {
                         // of words, but given this seems highly unlikely and the alternative is
                         // doing another full parsing of the preceding text, this seems acceptable.
                         break;
-                    } else if (charCode === NEWLINE_CHAR_CODE ||
-                        charCode === TAG_OPEN_CHAR_CODE) {
+                    } else if (charCode === NEWLINE_CHAR_CODE || charCode === TAG_OPEN_CHAR_CODE) {
                         i = j;
                         break;
                     } else if (isWhiteSpace(charCode)) {
@@ -337,7 +394,7 @@ function clipHtml(string, maxLength, options) {
                 }
             }
 
-            let result = string.slice(0, i) + (isLineBreak(string, i) ? '' : options.indicator);
+            let result = string.slice(0, i) + (isLineBreak(string, i) ? "" : options.indicator);
             while (tagStack.length) {
                 const tagName = tagStack.pop();
                 result += `</${tagName}>`;
@@ -357,7 +414,6 @@ function clipHtml(string, maxLength, options) {
 }
 
 function clipPlainText(string, maxLength, options) {
-
     const { maxLines } = options;
 
     let numChars = 1;
@@ -400,7 +456,7 @@ function clipPlainText(string, maxLength, options) {
                     const charCode = string.charCodeAt(j);
                     if (charCode === NEWLINE_CHAR_CODE) {
                         i = j;
-                        nextChar = '\n';
+                        nextChar = "\n";
                         break;
                     } else if (isWhiteSpace(charCode)) {
                         i = j + 1;
@@ -409,7 +465,7 @@ function clipPlainText(string, maxLength, options) {
                 }
             }
 
-            return string.slice(0, i) + (nextChar === '\n' ? '' : options.indicator);
+            return string.slice(0, i) + (nextChar === "\n" ? "" : options.indicator);
         }
     } else if (numLines > maxLines) {
         return string.slice(0, i);
@@ -419,7 +475,6 @@ function clipPlainText(string, maxLength, options) {
 }
 
 function indexOfWhiteSpace(string, fromIndex) {
-
     const { length } = string;
     for (let i = fromIndex; i < length; i++) {
         if (isWhiteSpace(string.charCodeAt(i))) {
@@ -436,8 +491,8 @@ function isLineBreak(string, index) {
     if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
     } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
-        var newlineElements = '(' + BLOCK_ELEMENTS.join('|') + '|' + 'br)';
-        var newlineRegExp = new RegExp('<' + newlineElements + '[\t\n\f\r ]*/?>', 'i');
+        const newlineElements = `(${BLOCK_ELEMENTS.join("|")}|` + "br)";
+        const newlineRegExp = new RegExp(`<${newlineElements}[\t\n\f\r ]*/?>`, "i");
         return newlineRegExp.test(string.slice(index));
     } else {
         return false;
@@ -445,13 +500,12 @@ function isLineBreak(string, index) {
 }
 
 function isWhiteSpace(charCode) {
-
-    return charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 ||
-           charCode === 32;
+    return (
+        charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 || charCode === 32
+    );
 }
 
 function takeCharAt(string, index) {
-
     const charCode = string.charCodeAt(index);
     if ((charCode & 0xfc00) === 0xd800) {
         // high Unicode surrogate should never be separated from its matching low surrogate

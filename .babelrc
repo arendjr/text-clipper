@@ -1,5 +1,5 @@
 {
-  "presets": ["es2015"],
+  "presets": ["es2017"],
   "plugins": ["array-includes"],
   "ignore": ["node_modules"]
 }
