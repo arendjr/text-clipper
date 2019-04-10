@@ -45,6 +45,20 @@ tape("plain-text: test word breaking", function(test) {
     test.equal(clip("Lorum ipsum", 11, options), "Lorum ipsum");
 });
 
+tape("plain-text: test word breaking without indicator", function(test) {
+    test.plan(7);
+
+    const options = { breakWords: true, indicator: "" };
+
+    test.equal(clip("Lorum ipsum", 5, options), "Lorum");
+    test.equal(clip("Lorum ipsum", 6, options), "Lorum ");
+    test.equal(clip("Lorum ipsum", 7, options), "Lorum i");
+    test.equal(clip("Lorum ipsum", 8, options), "Lorum ip");
+    test.equal(clip("Lorum ipsum", 9, options), "Lorum ips");
+    test.equal(clip("Lorum ipsum", 10, options), "Lorum ipsu");
+    test.equal(clip("Lorum ipsum", 11, options), "Lorum ipsum");
+});
+
 tape("plain-text: test max lines", function(test) {
     test.plan(5);
 

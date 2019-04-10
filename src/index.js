@@ -122,9 +122,9 @@ module.exports = function clip(string, maxLength, options = {}) {
 };
 
 function clipHtml(string, maxLength, options) {
-    const { imageWeight = 2, maxLines } = options;
+    const { imageWeight = 2, indicator, maxLines } = options;
 
-    let numChars = 1;
+    let numChars = indicator.length;
     let numLines = 1;
 
     let i = 0;
@@ -332,29 +332,31 @@ function clipHtml(string, maxLength, options) {
 
     if (numChars > maxLength) {
         let nextChar = takeCharAt(string, i);
-        let peekIndex = i + nextChar.length;
-        while (
-            string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
-            string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE
-        ) {
-            const nextPeekIndex = string.indexOf(">", peekIndex + 2) + 1;
-            if (nextPeekIndex) {
-                peekIndex = nextPeekIndex;
-            } else {
-                break;
-            }
-        }
-
-        if (peekIndex && (peekIndex === string.length || isLineBreak(string, peekIndex))) {
-            // if there's only a single character remaining in the input string, or the next
-            // character is followed by a line-break, we can include it instead of the clipping
-            // indicator (provided it's not a special HTML character)
-            if (nextChar === "<" || nextChar === "&") {
-                throw new Error(`Invalid HTML: ${string}`);
+        if (indicator) {
+            let peekIndex = i + nextChar.length;
+            while (
+                string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
+                string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE
+            ) {
+                const nextPeekIndex = string.indexOf(">", peekIndex + 2) + 1;
+                if (nextPeekIndex) {
+                    peekIndex = nextPeekIndex;
+                } else {
+                    break;
+                }
             }
 
-            i += nextChar.length;
-            nextChar = string.charAt(i);
+            if (peekIndex && (peekIndex === string.length || isLineBreak(string, peekIndex))) {
+                // if there's only a single character remaining in the input string, or the next
+                // character is followed by a line-break, we can include it instead of the clipping
+                // indicator (provided it's not a special HTML character)
+                if (nextChar === "<" || nextChar === "&") {
+                    throw new Error(`Invalid HTML: ${string}`);
+                }
+
+                i += nextChar.length;
+                nextChar = string.charAt(i);
+            }
         }
 
         // include closing tags before adding the clipping indicator if that's where they
@@ -394,7 +396,7 @@ function clipHtml(string, maxLength, options) {
                 }
             }
 
-            let result = string.slice(0, i) + (isLineBreak(string, i) ? "" : options.indicator);
+            let result = string.slice(0, i) + (isLineBreak(string, i) ? "" : indicator);
             while (tagStack.length) {
                 const tagName = tagStack.pop();
                 result += `</${tagName}>`;
@@ -414,9 +416,9 @@ function clipHtml(string, maxLength, options) {
 }
 
 function clipPlainText(string, maxLength, options) {
-    const { maxLines } = options;
+    const { indicator, maxLines } = options;
 
-    let numChars = 1;
+    let numChars = indicator.length;
     let numLines = 1;
 
     let i = 0;
@@ -444,29 +446,31 @@ function clipPlainText(string, maxLength, options) {
 
     if (numChars > maxLength) {
         let nextChar = takeCharAt(string, i);
-        const peekIndex = i + nextChar.length;
-        if (peekIndex === string.length) {
-            return string;
-        } else if (string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
-            return string.slice(0, i + nextChar.length);
-        } else {
-            if (!options.breakWords) {
-                // try to clip at word boundaries, if desired
-                for (let j = i - 1; j >= 0; j--) {
-                    const charCode = string.charCodeAt(j);
-                    if (charCode === NEWLINE_CHAR_CODE) {
-                        i = j;
-                        nextChar = "\n";
-                        break;
-                    } else if (isWhiteSpace(charCode)) {
-                        i = j + 1;
-                        break;
-                    }
+        if (indicator) {
+            const peekIndex = i + nextChar.length;
+            if (peekIndex === string.length) {
+                return string;
+            } else if (string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
+                return string.slice(0, i + nextChar.length);
+            }
+        }
+
+        if (!options.breakWords) {
+            // try to clip at word boundaries, if desired
+            for (let j = i - 1; j >= 0; j--) {
+                const charCode = string.charCodeAt(j);
+                if (charCode === NEWLINE_CHAR_CODE) {
+                    i = j;
+                    nextChar = "\n";
+                    break;
+                } else if (isWhiteSpace(charCode)) {
+                    i = j + 1;
+                    break;
                 }
             }
-
-            return string.slice(0, i) + (nextChar === "\n" ? "" : options.indicator);
         }
+
+        return string.slice(0, i) + (nextChar === "\n" ? "" : indicator);
     } else if (numLines > maxLines) {
         return string.slice(0, i);
     }
