@@ -3,7 +3,7 @@ const tape = require("tape");
 const clip = require("../../src");
 
 tape("html: test basic HTML", function(test) {
-    test.plan(29);
+    test.plan(31);
 
     const options = { html: true };
 
@@ -37,6 +37,9 @@ tape("html: test basic HTML", function(test) {
     test.equal(clip("<p><i>Lorum</i></p> ", 7, options), "<p><i>Lorum</i></p> ");
     test.equal(clip("<p><i>Lorum</i>  </p>", 7, options), "<p><i>Lorum</i>  </p>");
     test.equal(clip("<p><i>Lorum</i></p>  ", 7, options), "<p><i>Lorum</i></p>  ");
+
+    test.equal(clip("Lo<ins>rum</ins>", 4, options), "Lo<ins>r\u2026</ins>");
+    test.equal(clip("Lo<del>rum</del>", 4, options), "Lo<del>r\u2026</del>");
 
     test.equal(
         clip('<a href="http://just-a-link.com">Just a link</a>', 8, options),
