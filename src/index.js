@@ -1,3 +1,6 @@
+// Void elements are elements without inner content,
+// which close themselves regardless of trailing slash.
+// E.g. both <br> and <br /> are self-closing.
 const VOID_ELEMENTS = [
     "area",
     "base",
@@ -17,6 +20,8 @@ const VOID_ELEMENTS = [
     "wbr",
 ];
 
+// Block elements trigger newlines where they're inserted,
+// and are always safe places for truncation.
 const BLOCK_ELEMENTS = [
     "address",
     "article",
