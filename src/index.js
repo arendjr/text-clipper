@@ -62,6 +62,7 @@ const BLOCK_ELEMENTS = [
 ];
 
 const NEWLINE_CHAR_CODE = 10; // '\n'
+const EXCLAMATION_CHAR_CODE = 33; // '!'
 const DOUBLE_QUOTE_CHAR_CODE = 34; // '"'
 const AMPERSAND_CHAR_CODE = 38; // '&'
 const SINGLE_QUOTE_CHAR_CODE = 39; // '\''
@@ -156,10 +157,12 @@ function clipHtml(string, maxLength, options) {
 
         const charCode = string.charCodeAt(i);
         if (charCode === TAG_OPEN_CHAR_CODE) {
-            if (string.substr(i + 1, 3) === "!--") {
+            const nextCharCode = string.charCodeAt(i + 1);
+            const isSpecialTag = nextCharCode === EXCLAMATION_CHAR_CODE;
+            if (isSpecialTag && string.substr(i + 2, 2) === "--") {
                 const commentEndIndex = string.indexOf("-->", i + 4) + 3;
                 i = commentEndIndex - 1; // - 1 because the outer for loop will increment it
-            } else if (string.substr(i + 1, 8) === "![CDATA[") {
+            } else if (isSpecialTag && string.substr(i + 2, 7) === "[CDATA[") {
                 const cdataEndIndex = string.indexOf("]]>", i + 9) + 3;
                 i = cdataEndIndex - 1; // - 1 because the outer for loop will increment it
 
