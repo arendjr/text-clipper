@@ -145,7 +145,7 @@ function clipHtml(string, maxLength, options) {
         if (!isUnbreakableContent) {
             numChars += nextBlockSize;
             if (numChars > maxLength) {
-                i -= numChars - maxLength;
+                i = Math.max(i - numChars + maxLength, 0);
                 break;
             }
         }
@@ -512,8 +512,8 @@ function isLineBreak(string, index) {
     if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
     } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
-        const newlineElements = `(${BLOCK_ELEMENTS.join("|")}|` + "br)";
-        const newlineRegExp = new RegExp(`<${newlineElements}[\t\n\f\r ]*/?>`, "i");
+        const newlineElements = `(${BLOCK_ELEMENTS.join("|")}|br)`;
+        const newlineRegExp = new RegExp(`^<${newlineElements}[\t\n\f\r ]*/?>`, "i");
         return newlineRegExp.test(string.slice(index));
     } else {
         return false;

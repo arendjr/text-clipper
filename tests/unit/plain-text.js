@@ -69,3 +69,12 @@ tape("plain-text: test max lines", function(test) {
     test.equal(clip("Lorum\nipsum\n", 100, { maxLines: 2 }), "Lorum\nipsum");
     test.equal(clip("Lorum\nipsum\n\n", 100, { maxLines: 2 }), "Lorum\nipsum");
 });
+
+tape("plain-text: test edge cases", function(test) {
+    const options = { breakWords: true, html: true, indicator: "..." };
+
+    test.equal(clip("one two - three \nfour five", 0, options), "...");
+    test.equal(clip("one two - three \nfour five", 6, options), "one...");
+
+    test.end();
+});

@@ -346,3 +346,16 @@ tape("html: test ampersand without indicator and break words", function(test) {
     test.equal(clip("foo &0 bar", 10, options), "foo &0 bar");
     test.equal(clip("foo &lolwat bar", 15, options), "foo &lolwat bar");
 });
+
+tape("html: test edge cases", function(test) {
+    const options = { breakWords: true, html: true, indicator: "..." };
+
+    test.equal(clip('one <a href="#">two - three <br>four</a> five', 0, options), "...");
+    test.equal(clip('<p>one <a href="#">two - three <br>four</a> five</p>', 0, options), "");
+    test.equal(
+        clip('<p>one <a href="#">two - three <br>four</a> five</p>', 6, options),
+        "<p>one...</p>",
+    );
+
+    test.end();
+});
