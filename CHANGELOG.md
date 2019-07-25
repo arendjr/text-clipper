@@ -1,5 +1,12 @@
 # CHANGELOG
 
+## 1.2.4
+
+-   Fix #7: Fix two edge cases:
+    -   Incorrect result when `maxLength` is less than the size of the indicator.
+    -   Incorrect indicator when the remaining HTML contains a mix of block and inline elements.
+-   Tiny optimization when processing HTML tags.
+
 ## 1.2.3
 
 -   Fix #4: Correct clip length when using no indicator (indicator is an empty string).

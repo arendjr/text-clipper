@@ -1,6 +1,6 @@
 {
     "name": "text-clipper",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "description": "Fast and correct clip functions for HTML and plain text.",
     "main": "dist/index.js",
     "scripts": {
