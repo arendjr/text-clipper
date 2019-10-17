@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.3.0
+
+-  Add TypeScript definition.
+
 ## 1.2.4
 
 -   Fix #7: Fix two edge cases:
