@@ -1,12 +1,12 @@
 {
-  "name": "text-clipper-benchmark",
-  "version": "0.0.0",
-  "description": "text-clipper benchmark",
-  "devDependencies": {
-    "benchmark": "^2.1.1",
-    "html-truncate": "^1.2.1",
-    "microtime": "^2.1.1",
-    "trim-html": "^0.1.7",
-    "truncate-html": "^0.1.1"
-  }
+    "name": "text-clipper-benchmark",
+    "version": "0.0.0",
+    "description": "text-clipper benchmark",
+    "devDependencies": {
+        "benchmark": "^2.1.1",
+        "html-truncate": "^1.2.1",
+        "microtime": "^2.1.1",
+        "trim-html": "^0.1.7",
+        "truncate-html": "^0.1.1"
+    }
 }

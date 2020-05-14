@@ -1,3 +1,44 @@
+interface CommonClipOptions {
+    /**
+     * By default, we try to break only at word boundaries. Set to true if this is undesired.
+     */
+    breakWords?: boolean;
+
+    /**
+     * Set to `true` if the string is HTML-encoded. If so, this method will take extra care to make
+     * sure the HTML-encoding is correctly maintained.
+     */
+    html?: boolean;
+
+    /**
+     * The string to insert to indicate clipping. Default: "…".
+     */
+    indicator?: string;
+
+    /**
+     * Maximum amount of lines allowed. If given, the string will be clipped either at the moment
+     * the maximum amount of characters is exceeded or the moment maxLines newlines are discovered,
+     * whichever comes first.
+     */
+    maxLines?: number;
+}
+
+interface ClipPlainTextOptions extends CommonClipOptions {
+    html?: false;
+}
+
+interface ClipHtmlOptions extends CommonClipOptions {
+    html: true;
+
+    /**
+     * The amount of characters to assume for images. This is used whenever an image is encountered,
+     * but also for SVG and MathML content. Default: `2`.
+     */
+    imageWeight?: number;
+}
+
+type ClipOptions = ClipPlainTextOptions | ClipHtmlOptions;
+
 // Void elements are elements without inner content,
 // which close themselves regardless of trailing slash.
 // E.g. both <br> and <br /> are self-closing.
@@ -95,47 +136,31 @@ const TRIM_END_REGEX = /\s+$/;
  *
  * @param string The string to clip.
  * @param maxLength The maximum length of the clipped string in number of characters.
- * @param options Optional options object. May contain the following property:
- *                breakWords - By default, we try to break only at word boundaries. Set to true if
- *                             this is undesired.
- *                html - Set to true if the string is HTML-encoded. If so, this method will take
- *                       extra care to make sure the HTML-encoding is correctly maintained.
- *                imageWeight - The amount of characters to assume for images. This is used
- *                              whenever an image is encountered, but also for SVG and MathML
- *                              content. Default: 2.
- *                indicator - The string to insert to indicate clipping. Default: "…".
- *                maxLines - Maximum amount of lines allowed. If given, the string will be
- *                           clipped either at the moment the maximum amount of characters is
- *                           exceeded or the moment maxLines newlines are discovered, whichever
- *                           comes first.
+ * @param options Optional options object.
  *
  * @return The clipped string.
  */
-module.exports = function clip(string, maxLength, options = {}) {
+export default function clip(string: string, maxLength: number, options: ClipOptions = {}): string {
     if (!string) {
         return "";
     }
 
     string = string.toString();
 
-    if (options.indicator === undefined) {
-        options.indicator = "\u2026";
-    }
-
     return options.html
         ? clipHtml(string, maxLength, options)
         : clipPlainText(string, maxLength, options);
-};
+}
 
-function clipHtml(string, maxLength, options) {
-    const { imageWeight = 2, indicator, maxLines } = options;
+function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): string {
+    const { imageWeight = 2, indicator = "\u2026", maxLines = Infinity } = options;
 
     let numChars = indicator.length;
     let numLines = 1;
 
     let i = 0;
     let isUnbreakableContent = false;
-    const tagStack = [];
+    const tagStack: Array<string> = [];
     const { length } = string;
     for (; i < length; i++) {
         const rest = i ? string.slice(i) : string;
@@ -427,8 +452,8 @@ function clipHtml(string, maxLength, options) {
     return string;
 }
 
-function clipPlainText(string, maxLength, options) {
-    const { indicator, maxLines } = options;
+function clipPlainText(string: string, maxLength: number, options: CommonClipOptions): string {
+    const { indicator = "\u2026", maxLines = Infinity } = options;
 
     let numChars = indicator.length;
     let numLines = 1;
@@ -490,7 +515,7 @@ function clipPlainText(string, maxLength, options) {
     return string;
 }
 
-function indexOfWhiteSpace(string, fromIndex) {
+function indexOfWhiteSpace(string: string, fromIndex: number): number {
     const { length } = string;
     for (let i = fromIndex; i < length; i++) {
         if (isWhiteSpace(string.charCodeAt(i))) {
@@ -502,7 +527,7 @@ function indexOfWhiteSpace(string, fromIndex) {
     return length;
 }
 
-function isCharacterReferenceCharacter(charCode) {
+function isCharacterReferenceCharacter(charCode: number): boolean {
     return (
         (charCode >= 48 && charCode <= 57) ||
         (charCode >= 65 && charCode <= 90) ||
@@ -510,7 +535,7 @@ function isCharacterReferenceCharacter(charCode) {
     );
 }
 
-function isLineBreak(string, index) {
+function isLineBreak(string: string, index: number): boolean {
     const firstCharCode = string.charCodeAt(index);
     if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
@@ -523,13 +548,13 @@ function isLineBreak(string, index) {
     }
 }
 
-function isWhiteSpace(charCode) {
+function isWhiteSpace(charCode: number): boolean {
     return (
         charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 || charCode === 32
     );
 }
 
-function takeCharAt(string, index) {
+function takeCharAt(string: string, index: number): string {
     const charCode = string.charCodeAt(index);
     if ((charCode & 0xfc00) === 0xd800) {
         // high Unicode surrogate should never be separated from its matching low surrogate
@@ -541,7 +566,7 @@ function takeCharAt(string, index) {
     return String.fromCharCode(charCode);
 }
 
-function takeHtmlCharAt(string, index) {
+function takeHtmlCharAt(string: string, index: number): string {
     let char = takeCharAt(string, index);
     if (char === "&") {
         while (true /* eslint-disable-line */) {

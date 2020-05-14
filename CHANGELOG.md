@@ -1,8 +1,14 @@
 # CHANGELOG
 
+## 2.0.0
+
+-   Use TypeScript primarily to ease Deno support.
+-   Assume `Array.prototype.includes()` is available.
+-   Upgraded development dependencies.
+
 ## 1.3.0
 
--  Add TypeScript definition.
+-   Add TypeScript definition.
 
 ## 1.2.4
 

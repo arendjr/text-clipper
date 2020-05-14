@@ -1,5 +1,4 @@
-text-clipper.js
-===============
+# text-clipper.js
 
 Fast and correct clip functions for HTML and plain text.
 
@@ -8,43 +7,42 @@ Fast and correct clip functions for HTML and plain text.
 
 Written by [Arend van Beelen jr.](https://github.com/arendjr) @ [Speakap](https://www.speakap.com).
 
-Why use text-clipper?
----------------------
+## Why use text-clipper?
 
 text-clipper offers the following advantages over similar libraries that allow clipping HTML:
 
- * **Correctness**
-   * HTML is processed through a proper state machine, no regular expression hacks.
-   * Valid HTML input always produces valid HTML output.
-   * Heavily unit-tested to support the above statement.
- * **Proper Unicode handling**
-   * Unicode-awareness makes sure Unicode characters such as emojis don't get clipped halfway.
- * **Performance**
-   * Text-clipper has been carefully optimized and is typically as fast as or faster than its
-     competitors (see: [blog](http://www.arendjr.nl/2016/09/how-i-made-text-clipper-fastest-html.html)).
- * **Consistent API and behavior for both HTML and plain text**
+-   **Correctness**
+    -   HTML is processed through a proper state machine, no regular expression hacks.
+    -   Valid HTML input always produces valid HTML output.
+    -   Heavily unit-tested to support the above statement.
+-   **Proper Unicode handling**
+    -   Unicode-awareness makes sure Unicode characters such as emojis don't get clipped halfway.
+-   **Performance**
+    -   Text-clipper has been carefully optimized and is typically as fast as or faster than its
+        competitors (see: [blog](http://www.arendjr.nl/2016/09/how-i-made-text-clipper-fastest-html.html)).
+-   **Consistent API and behavior for both HTML and plain text**
 
-Setup
------
+## Setup
 
 Make sure you have Node.js installed and run:
 
-    $ npm install text-clipper
+    $ yarn add text-clipper  # or: npm install --save text-clipper
 
-Usage
------
+If compatibility with Internet Explorer is required, make sure you have a polyfill for
+`Array.prototype.includes()`.
+
+## Usage
 
 Basic example:
 
-    var clip = require('text-clipper');
-    var clippedString = clip(string, 80); // returns a string of at most 80 characters
+    import clip from "text-clipper";
+    const clippedString = clip(string, 80); // returns a string of at most 80 characters
 
 You can also specify options:
 
-    var clippedHtml = clip(htmlString, 140, { html: true, maxLines: 5 });
+    const clippedHtml = clip(htmlString, 140, { html: true, maxLines: 5 });
 
-Options
--------
+## Options
 
 ### breakWords
 

@@ -1,18 +1,18 @@
 {
-    "env": {
-        "es6": true,
-        "node": true
-    },
-    "extends": ["eslint:recommended", "prettier"],
+    "parser": "@typescript-eslint/parser",
     "parserOptions": {
-        "ecmaFeatures": {
-            "globalReturn": true,
-            "modules": true
-        },
-        "ecmaVersion": 8,
+        "ecmaVersion": 2017,
         "sourceType": "module"
     },
-    "plugins": ["prettier"],
+    "env": {
+        "jest/globals": true
+    },
+    "extends": [
+        "plugin:@typescript-eslint/recommended",
+        "prettier/@typescript-eslint",
+        "plugin:prettier/recommended"
+    ],
+    "plugins": ["jest", "prettier"],
     "root": true,
     "rules": {
         "constructor-super": "error",
@@ -43,10 +43,9 @@
             {
                 "bracketSpacing": true,
                 "jsxBracketSameLine": false,
-                "parser": "babel",
                 "printWidth": 100,
-                "singleQuote": false,
                 "semi": true,
+                "singleQuote": false,
                 "tabWidth": 4,
                 "trailingComma": "all"
             }
@@ -57,6 +56,7 @@
         "spaced-comment": ["error", "always", { "markers": ["/"] }],
         "strict": ["error", "global"],
         "yoda": "error",
-        "quotes": ["error", "double", { "avoidEscape": true }]
+        "quotes": ["error", "double", { "avoidEscape": true }],
+        "@typescript-eslint/no-use-before-define": ["error", { "functions": false }]
     }
 }
