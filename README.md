@@ -22,25 +22,44 @@ text-clipper offers the following advantages over similar libraries that allow c
         competitors (see: [blog](http://www.arendjr.nl/2016/09/how-i-made-text-clipper-fastest-html.html)).
 -   **Consistent API and behavior for both HTML and plain text**
 
-## Setup
+## Usage
 
-Make sure you have Node.js installed and run:
+### Node.js
 
-    $ yarn add text-clipper  # or: npm install --save text-clipper
+First install the `text-clipper` package:
+
+```sh
+$ yarn add text-clipper  # or: npm install --save text-clipper
+```
 
 If compatibility with Internet Explorer is required, make sure you have a polyfill for
 `Array.prototype.includes()`.
 
-## Usage
+Once installed, you can use it as follows:
 
-Basic example:
+```js
+import clip from "text-clipper"; // or: const clip = require("text-clipper").default;
 
-    import clip from "text-clipper";
-    const clippedString = clip(string, 80); // returns a string of at most 80 characters
+const clippedString = clip(string, 80); // returns a string of at most 80 characters
 
-You can also specify options:
+const clippedHtml = clip(htmlString, 140, { html: true, maxLines: 5 });
+```
 
-    const clippedHtml = clip(htmlString, 140, { html: true, maxLines: 5 });
+### Deno
+
+When using Deno, you can import right away:
+
+```js
+import clip from "https://raw.githubusercontent.com/arendjr/text-clipper/master/mod.ts";
+```
+
+And use it like this:
+
+```js
+const clippedString = clip(string, 80); // returns a string of at most 80 characters
+
+const clippedHtml = clip(htmlString, 140, { html: true, maxLines: 5 });
+```
 
 ## Options
 
