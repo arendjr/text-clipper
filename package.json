@@ -6,7 +6,7 @@
     "types": "dist/index.d.ts",
     "scripts": {
         "build": "tsc",
-        "lint": "eslint src/*.ts tests/*/*.ts",
+        "lint": "eslint mod.ts src/*.ts tests/*/*.ts",
         "prepublish": "yarn build",
         "test": "jest"
     },
