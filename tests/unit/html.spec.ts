@@ -314,3 +314,62 @@ test("html: test edge cases", () => {
         "<p>one...</p>",
     );
 });
+
+test("html: issue #12: split tables", () => {
+    const html = `<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    <tbody>
+        <tr>
+            <td>fb</td>
+            <td>fbfbfb</td>
+        </tr>
+        <tr>
+            <td>google</td>
+            <td>twitter</td>
+        </tr>
+        <tr>
+            <td>intel</td>
+            <td>amazon</td>
+        </tr>
+    </tbody>
+</table>`;
+
+    expect(clip(html, 26, { html: true, breakWords: true }))
+        .toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    <tbody>
+        <tr>
+            <td>fb</td>
+            <td>fbfbfb</td>
+        </tr>
+        <tr>
+            <td>google</td>
+            <td>twitter</td>
+        </tr>
+        <tr>
+            <td>intel</td></tr></tbody></table>`);
+
+    expect(clip(html, 25, { html: true, breakWords: true }))
+        .toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    <tbody>
+        <tr>
+            <td>fb</td>
+            <td>fbfbfb</td>
+        </tr>
+        <tr>
+            <td>google</td>
+            <td>twitter</td>
+        </tr>
+        <tr>
+            <td>int\u2026</td></tr></tbody></table>`);
+
+    expect(clip(html, 25, { html: true, breakWords: true, maxLines: 2 }))
+        .toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    <tbody>
+        <tr>
+            <td>fb</td>
+            <td>fbfbfb</td>
+        </tr>
+        <tr>
+            <td>google</td>
+            <td>twitter</td>
+        </tr></tbody></table>`);
+});

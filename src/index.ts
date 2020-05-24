@@ -97,7 +97,10 @@ const BLOCK_ELEMENTS = [
     "pre",
     "section",
     "table",
+    "tbody",
     "tfoot",
+    "thead",
+    "tr",
     "ul",
     "video",
 ];
@@ -115,7 +118,7 @@ const TAG_CLOSE_CHAR_CODE = 62; // '>'
 
 const CHAR_OF_INTEREST_REGEX = /[<&\n\ud800-\udbff]/;
 
-const TRIM_END_REGEX = /\s+$/;
+const SIMPLIFY_WHITESPACE_REGEX = /\s{2,}/g;
 
 /**
  * Clips a string to a maximum length. If the string exceeds the length, it is truncated and an
@@ -160,7 +163,7 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
 
     let i = 0;
     let isUnbreakableContent = false;
-    const tagStack: Array<string> = [];
+    const tagStack: Array<string> = []; // Stack of currently open HTML tags.
     const { length } = string;
     for (; i < length; i++) {
         const rest = i ? string.slice(i) : string;
@@ -169,10 +172,20 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
         i += nextBlockSize;
 
         if (!isUnbreakableContent) {
-            numChars += nextBlockSize;
-            if (numChars > maxLength) {
-                i = Math.max(i - numChars + maxLength, 0);
-                break;
+            if (shouldSimplifyWhiteSpace(tagStack)) {
+                numChars += simplifyWhiteSpace(
+                    nextBlockSize === rest.length ? rest : rest.slice(0, nextIndex),
+                ).length;
+                if (numChars > maxLength) {
+                    i -= nextBlockSize; // We just cut off the entire incorrectly placed text...
+                    break;
+                }
+            } else {
+                numChars += nextBlockSize;
+                if (numChars > maxLength) {
+                    i = Math.max(i - numChars + maxLength, 0);
+                    break;
+                }
             }
         }
 
@@ -344,7 +357,7 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                 i = endIndex;
             }
         } else if (charCode === NEWLINE_CHAR_CODE) {
-            if (!isUnbreakableContent) {
+            if (!isUnbreakableContent && !shouldSimplifyWhiteSpace(tagStack)) {
                 numChars++;
                 if (numChars > maxLength) {
                     break;
@@ -401,10 +414,7 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
         while (nextChar === "<" && string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE) {
             const tagName = tagStack.pop();
             const tagEndIndex = tagName ? string.indexOf(">", i + 2) : -1;
-            if (
-                tagEndIndex === -1 ||
-                string.replace(TRIM_END_REGEX, "").slice(i + 2, tagEndIndex) !== tagName
-            ) {
+            if (tagEndIndex === -1 || string.slice(i + 2, tagEndIndex).trim() !== tagName) {
                 throw new Error(`Invalid HTML: ${string}`);
             }
 
@@ -433,7 +443,10 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                 }
             }
 
-            let result = string.slice(0, i) + (isLineBreak(string, i) ? "" : indicator);
+            let result = string.slice(0, i);
+            if (!isLineBreak(string, i)) {
+                result += indicator;
+            }
             while (tagStack.length) {
                 const tagName = tagStack.pop();
                 result += `</${tagName}>`;
@@ -522,8 +535,8 @@ function indexOfWhiteSpace(string: string, fromIndex: number): number {
             return i;
         }
     }
-    // rather than -1, this function returns the length of the string if no match is found,
-    // so it works well with the Math.min() usage below
+    // Rather than -1, this function returns the length of the string if no match is found,
+    // so it works well with the Math.min() usage above:
     return length;
 }
 
@@ -552,6 +565,27 @@ function isWhiteSpace(charCode: number): boolean {
     return (
         charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 || charCode === 32
     );
+}
+
+/**
+ * Certain tags don't display their whitespace-only content. In such cases, we
+ * should simplify the whitespace before counting it.
+ */
+function shouldSimplifyWhiteSpace(tagStack: Array<string>): boolean {
+    for (let i = tagStack.length - 1; i >= 0; i--) {
+        const tagName = tagStack[i];
+        if (tagName === "li" || tagName === "td") {
+            return false;
+        }
+        if (tagName === "ol" || tagName === "table" || tagName === "ul") {
+            return true;
+        }
+    }
+    return false;
+}
+
+function simplifyWhiteSpace(string: string): string {
+    return string.trim().replace(SIMPLIFY_WHITESPACE_REGEX, " ");
 }
 
 function takeCharAt(string: string, index: number): string {
