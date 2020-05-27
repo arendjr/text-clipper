@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 2.1.0
+
+-  Implement #12: Improve support for clipping HTML tables.
+
 ## 2.0.0
 
 -   Use TypeScript primarily to ease Deno support.
