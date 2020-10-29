@@ -1,0 +1,10 @@
+{
+                                "name": "text_clipper",
+                                "description": "Fast and correct clip functions for HTML and plain text",
+                                "homepage": "https://github.com/arendjr/text-clipper",
+                                "files": [
+                                  "./**/*.ts",
+                                  "README.md"
+                                ],
+                                "entry": "./mod.ts"
+                              }
