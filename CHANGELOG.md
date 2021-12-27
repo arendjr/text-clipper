@@ -1,6 +1,6 @@
 # CHANGELOG
 
-## master
+## 2.2.0
 
 -   Implement #14: Add `stripTags` option.
 -   Tiny Unicode fix.
