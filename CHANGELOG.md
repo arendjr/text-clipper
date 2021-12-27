@@ -4,6 +4,7 @@
 
 -   Implement #14: Add `stripTags` option.
 -   Tiny Unicode fix.
+-   Treat `<audio>` and `<video>` as unbreakable elements.
 
 ## 2.1.0
 

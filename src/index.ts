@@ -112,6 +112,9 @@ const BLOCK_ELEMENTS = [
     "video",
 ];
 
+// Elements that are unbreakable: they are either included verbatim, or omitted entirely.
+const UNBREAKABLE_ELEMENTS = ["audio", "math", "svg", "video"];
+
 const NEWLINE_CHAR_CODE = 10; // '\n'
 const EXCLAMATION_CHAR_CODE = 33; // '!'
 const DOUBLE_QUOTE_CHAR_CODE = 34; // '"'
@@ -328,8 +331,12 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                                 throw new Error(`Invalid HTML: ${string}`);
                             }
 
-                            if (tagName === "math" || tagName === "svg") {
-                                if (tagStack.includes("math") || tagStack.includes("svg")) {
+                            if (UNBREAKABLE_ELEMENTS.includes(tagName)) {
+                                if (
+                                    UNBREAKABLE_ELEMENTS.some((tagName) =>
+                                        tagStack.includes(tagName),
+                                    )
+                                ) {
                                     // It's a nested unbreakable element.
                                 } else if (strip) {
                                     i = unbreakableElementIndex;
@@ -374,9 +381,11 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                                 }
                             }
                         } else {
-                            if (tagStack.includes("math") || tagStack.includes("svg")) {
+                            if (
+                                UNBREAKABLE_ELEMENTS.some((tagName) => tagStack.includes(tagName))
+                            ) {
                                 // It's a nested unbreakable element.
-                            } else if (tagName === "math" || tagName === "svg") {
+                            } else if (UNBREAKABLE_ELEMENTS.includes(tagName)) {
                                 unbreakableElementIndex = i;
                             }
                             tagStack.push(tagName);
