@@ -439,10 +439,12 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                 }
             }
 
-            // high Unicode surrogate should never be separated from its matching low surrogate
-            const nextCharCode = string.charCodeAt(i + 1);
-            if ((nextCharCode & 0xfc00) === 0xdc00) {
-                i++;
+            if ((charCode & 0xfc00) === 0xd800) {
+                // high Unicode surrogate should never be separated from its matching low surrogate
+                const nextCharCode = string.charCodeAt(i + 1);
+                if ((nextCharCode & 0xfc00) === 0xdc00) {
+                    i++;
+                }
             }
         }
     }

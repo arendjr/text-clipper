@@ -3,6 +3,7 @@
 ## master
 
 -   Implement #14: Add `stripTags` option.
+-   Tiny Unicode fix.
 
 ## 2.1.0
 
