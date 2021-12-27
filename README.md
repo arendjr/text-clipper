@@ -5,8 +5,6 @@ Fast and correct clip functions for HTML and plain text.
 [![Build Status](https://travis-ci.org/arendjr/text-clipper.svg?branch=master)](https://travis-ci.org/arendjr/text-clipper)
 [![text-clipper on NPM](https://img.shields.io/npm/v/text-clipper.svg)](https://www.npmjs.com/package/text-clipper)
 
-Written by [Arend van Beelen jr.](https://github.com/arendjr) @ [Speakap](https://www.speakap.com).
-
 ## Why use text-clipper?
 
 text-clipper offers the following advantages over similar libraries that allow clipping HTML:
@@ -95,3 +93,17 @@ comes first.
 Note when in HTML mode, block-level elements trigger newlines and text-clipper assumes the text
 will be displayed with a CSS white-space setting that treats `\n` as a line break. Of course the
 HTML tag `<br>` is also counted.
+
+### stripTags
+
+Optional list of tags to be stripped from the input HTML. May be set to `true` to strip all tags.
+Only supported in combination with `html: true`.
+
+Example:
+
+```js
+// Strips all images from the input string:
+clip(input, 140, { html: true, stripTags: ["img", "svg"] });
+```
+
+Tag names must be specified in lowercase.

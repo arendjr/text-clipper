@@ -373,3 +373,71 @@ test("html: issue #12: split tables", () => {
             <td>twitter</td>
         </tr></tbody></table>`);
 });
+
+test("html: test strip tags", () => {
+    // Basic stripping of tags:
+    const htmlWithImage = '<p>Image <img alt="blup" src="#"> and such</p>';
+    expect(clip(htmlWithImage, 12, { html: true, stripTags: [] })).toBe(
+        clip(htmlWithImage, 12, { html: true }),
+    );
+    expect(clip(htmlWithImage, 12, { html: true, stripTags: ["img"] })).toBe(
+        "<p>Image  and \u2026</p>",
+    );
+    expect(clip(htmlWithImage, 12, { html: true, stripTags: ["img", "p"] })).toBe(
+        "Image  and \u2026",
+    );
+    expect(clip(htmlWithImage, 12, { html: true, stripTags: true })).toBe("Image  and \u2026");
+    expect(clip(htmlWithImage, 15, { html: true, stripTags: ["img"] })).toBe(
+        "<p>Image  and such</p>",
+    );
+
+    // Links are stripped (but content is preserved):
+    const htmlWithLink = '<a href="http://example.com/?x=1&y=2">foo</a>';
+    expect(clip(htmlWithLink, 3, { html: true, stripTags: ["a"] })).toBe("foo");
+    expect(clip(htmlWithLink, 3, { html: true, stripTags: ["b"] })).toBe(htmlWithLink);
+
+    // Same for tables, but whitespace is also simplified:
+    const htmlWithTable = `hello <table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    <tbody>
+        <tr>
+            <td>fb</td>
+            <td>fbfbfb</td>
+        </tr>
+        <tr>
+            <td>google</td>
+            <td>twitter</td>
+        </tr>
+        <tr>
+            <td>intel</td>
+            <td>amazon</td>
+        </tr>
+    </tbody>
+</table> world`;
+    expect(clip(htmlWithTable, 10, { html: true, stripTags: true })).toBe("hello fb \u2026");
+    expect(clip(htmlWithTable, 16, { html: true, stripTags: true })).toBe("hello fb fbfbfb ");
+    expect(clip(htmlWithTable, 24, { html: true, stripTags: true })).toBe(
+        "hello fb fbfbfb google \u2026",
+    );
+
+    // SVG's `imageWeight` should not be counted when stripped:
+    const htmlWithSvg =
+        "<p>" +
+        '<svg width="100%" height="100%" viewBox="0 0 100 100"' +
+        ' xmlns="http://www.w3.org/2000/svg">\n' +
+        "<style>\n" +
+        "/* <![CDATA[ */\n" +
+        "circle {\n" +
+        "fill: orange;\n" +
+        "stroke: black;\n" +
+        "stroke-width: 10px; " +
+        "// Note that the value of a pixel depend on the viewBox\n" +
+        "}\n" +
+        "/* ]]> */\n" +
+        "</style>\n" +
+        "\n" +
+        '<circle cx="50" cy="50" r="40" />\n' +
+        "</svg>test\n" +
+        "</p>";
+    expect(clip(htmlWithSvg, 3, { html: true, stripTags: ["svg"] })).toBe("<p>te\u2026</p>");
+    expect(clip(htmlWithSvg, 4, { html: true, stripTags: ["svg"] })).toBe("<p>test</p>");
+});

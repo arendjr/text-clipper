@@ -35,6 +35,13 @@ interface ClipHtmlOptions extends CommonClipOptions {
      * but also for SVG and MathML content. Default: `2`.
      */
     imageWeight?: number;
+
+    /**
+     * Optional list of tags to be stripped from the output. If `true`, all tags are stripped.
+     *
+     * Tag names must be specified in lowercase.
+     */
+    stripTags?: Array<string> | true;
 }
 
 type ClipOptions = ClipPlainTextOptions | ClipHtmlOptions;
@@ -117,8 +124,9 @@ const EQUAL_SIGN_CHAR_CODE = 61; // '='
 const TAG_CLOSE_CHAR_CODE = 62; // '>'
 
 const CHAR_OF_INTEREST_REGEX = /[<&\n\ud800-\udbff]/;
+const CHAR_OF_INTEREST_NO_NEWLINE_REGEX = /[<&\ud800-\udbff]/;
 
-const SIMPLIFY_WHITESPACE_REGEX = /\s{2,}/g;
+const SIMPLIFY_WHITESPACE_REGEX = /\s+/g;
 
 /**
  * Clips a string to a maximum length. If the string exceeds the length, it is truncated and an
@@ -156,38 +164,83 @@ export default function clip(string: string, maxLength: number, options: ClipOpt
 }
 
 function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): string {
-    const { imageWeight = 2, indicator = "\u2026", maxLines = Infinity } = options;
+    const {
+        imageWeight = 2,
+        indicator = "\u2026",
+        maxLines = Infinity,
+        stripTags = false,
+    } = options;
 
     let numChars = indicator.length;
     let numLines = 1;
 
-    let i = 0;
-    let isUnbreakableContent = false;
+    const shouldStrip =
+        typeof stripTags === "boolean"
+            ? () => stripTags
+            : (tagName: string) => stripTags.includes(tagName);
+
     const tagStack: Array<string> = []; // Stack of currently open HTML tags.
+    const popTagStack = (result: string) => {
+        let tagName;
+        while (((tagName = tagStack.pop()), tagName !== undefined)) {
+            if (!shouldStrip(tagName)) {
+                result += `</${tagName}>`;
+            }
+        }
+        return result;
+    };
+
+    let i = 0;
+    let unbreakableElementIndex = -1;
     const { length } = string;
     for (; i < length; i++) {
         const rest = i ? string.slice(i) : string;
-        const nextIndex = rest.search(CHAR_OF_INTEREST_REGEX);
-        const nextBlockSize = nextIndex > -1 ? nextIndex : rest.length;
-        i += nextBlockSize;
+        const willSimplifyWhiteSpace = shouldSimplifyWhiteSpace(tagStack);
+        const regex =
+            unbreakableElementIndex > -1 || willSimplifyWhiteSpace
+                ? CHAR_OF_INTEREST_NO_NEWLINE_REGEX
+                : CHAR_OF_INTEREST_REGEX;
+        const nextIndex = rest.search(regex);
+        let nextBlockSize = nextIndex > -1 ? nextIndex : rest.length;
 
-        if (!isUnbreakableContent) {
-            if (shouldSimplifyWhiteSpace(tagStack)) {
-                numChars += simplifyWhiteSpace(
+        if (unbreakableElementIndex === -1) {
+            if (willSimplifyWhiteSpace) {
+                let simplifiedBlock = simplifyWhiteSpace(
                     nextBlockSize === rest.length ? rest : rest.slice(0, nextIndex),
-                ).length;
+                );
+
+                if (shouldStrip(tagStack[tagStack.length - 1]!)) {
+                    // We want to strip whitespace, but we need to insert spaces if stripping the
+                    // tags and whitespace together would otherwise inadvertently concatenate words:
+                    const insertSpaceBefore = i > 0 && !isWhiteSpace(string.charCodeAt(i - 1));
+                    const insertSpaceAfter = !isWhiteSpace(string.charCodeAt(i + nextBlockSize));
+                    if (simplifiedBlock.length > 0) {
+                        simplifiedBlock =
+                            (insertSpaceBefore ? " " : "") +
+                            simplifiedBlock +
+                            (insertSpaceAfter ? " " : "");
+                    } else if (insertSpaceBefore && insertSpaceAfter) {
+                        simplifiedBlock = " ";
+                    }
+
+                    string = string.slice(0, i) + simplifiedBlock + string.slice(i + nextBlockSize);
+                    nextBlockSize = simplifiedBlock.length;
+                }
+
+                numChars += simplifiedBlock.length;
                 if (numChars > maxLength) {
-                    i -= nextBlockSize; // We just cut off the entire incorrectly placed text...
                     break;
                 }
             } else {
                 numChars += nextBlockSize;
                 if (numChars > maxLength) {
-                    i = Math.max(i - numChars + maxLength, 0);
+                    i = Math.max(i + nextBlockSize - numChars + maxLength, 0);
                     break;
                 }
             }
         }
+
+        i += nextBlockSize;
 
         if (nextIndex === -1) {
             break;
@@ -208,10 +261,8 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                 // allowed within SVG and MathML content, both of which we don't clip
             } else {
                 // don't open new tags if we are currently at the limit
-                if (
-                    numChars === maxLength &&
-                    string.charCodeAt(i + 1) !== FORWARD_SLASH_CHAR_CODE
-                ) {
+                const isEndTag = nextCharCode === FORWARD_SLASH_CHAR_CODE;
+                if (numChars === maxLength && !isEndTag) {
                     numChars++;
                     break;
                 }
@@ -256,7 +307,6 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                             attributeQuoteCharCode = 0;
                         }
                     } else if (charCode === TAG_CLOSE_CHAR_CODE) {
-                        const isEndTag = string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE;
                         const tagNameStartIndex = i + (isEndTag ? 2 : 1);
                         const tagNameEndIndex = Math.min(
                             indexOfWhiteSpace(string, tagNameStartIndex),
@@ -270,6 +320,8 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                             tagName = tagName.slice(0, tagName.length - 1);
                         }
 
+                        const strip = shouldStrip(tagName);
+
                         if (isEndTag) {
                             const currentTagName = tagStack.pop();
                             if (currentTagName !== tagName) {
@@ -277,9 +329,13 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                             }
 
                             if (tagName === "math" || tagName === "svg") {
-                                isUnbreakableContent =
-                                    tagStack.includes("math") || tagStack.includes("svg");
-                                if (!isUnbreakableContent) {
+                                if (tagStack.includes("math") || tagStack.includes("svg")) {
+                                    // It's a nested unbreakable element.
+                                } else if (strip) {
+                                    i = unbreakableElementIndex;
+                                    unbreakableElementIndex = -1;
+                                } else {
+                                    unbreakableElementIndex = -1;
                                     numChars += imageWeight;
                                     if (numChars > maxLength) {
                                         break;
@@ -287,25 +343,26 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                                 }
                             }
 
-                            if (BLOCK_ELEMENTS.includes(tagName)) {
-                                // All block level elements should trigger a new line
-                                // when truncating
-                                if (!isUnbreakableContent) {
-                                    numLines++;
-                                    if (numLines > maxLines) {
-                                        // If we exceed the max lines, push the tag back onto the
-                                        // stack so that it will be added back correctly after
-                                        // truncation
-                                        tagStack.push(tagName);
-                                        break;
-                                    }
+                            // Block level elements should trigger a new line, unless stripped or
+                            // part of unbreakable content.
+                            const isBlockElement = BLOCK_ELEMENTS.includes(tagName);
+                            if (isBlockElement && unbreakableElementIndex === -1 && !strip) {
+                                numLines++;
+                                if (numLines > maxLines) {
+                                    // If we exceed the max lines, push the tag back onto the
+                                    // stack so that it will be added back correctly after
+                                    // truncation.
+                                    tagStack.push(tagName);
+                                    break;
                                 }
                             }
                         } else if (
                             VOID_ELEMENTS.includes(tagName) ||
                             string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE
                         ) {
-                            if (tagName === "br") {
+                            if (strip) {
+                                // Stripped elements aren't counted towards anything.
+                            } else if (tagName === "br") {
                                 numLines++;
                                 if (numLines > maxLines) {
                                     break;
@@ -317,13 +374,21 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                                 }
                             }
                         } else {
-                            tagStack.push(tagName);
-                            if (tagName === "math" || tagName === "svg") {
-                                isUnbreakableContent = true;
+                            if (tagStack.includes("math") || tagStack.includes("svg")) {
+                                // It's a nested unbreakable element.
+                            } else if (tagName === "math" || tagName === "svg") {
+                                unbreakableElementIndex = i;
                             }
+                            tagStack.push(tagName);
                         }
 
-                        i = endIndex;
+                        if (strip && unbreakableElementIndex === -1) {
+                            string = string.slice(0, i) + string.slice(endIndex + 1);
+                            i--; // Re-evaluate this index, because its contents changed.
+                        } else {
+                            i = endIndex;
+                        }
+
                         break;
                     }
                 }
@@ -346,7 +411,7 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                 }
             }
 
-            if (!isUnbreakableContent) {
+            if (unbreakableElementIndex === -1) {
                 numChars++;
                 if (numChars > maxLength) {
                     break;
@@ -357,19 +422,17 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                 i = endIndex;
             }
         } else if (charCode === NEWLINE_CHAR_CODE) {
-            if (!isUnbreakableContent && !shouldSimplifyWhiteSpace(tagStack)) {
-                numChars++;
-                if (numChars > maxLength) {
-                    break;
-                }
+            numChars++;
+            if (numChars > maxLength) {
+                break;
+            }
 
-                numLines++;
-                if (numLines > maxLines) {
-                    break;
-                }
+            numLines++;
+            if (numLines > maxLines) {
+                break;
             }
         } else {
-            if (!isUnbreakableContent) {
+            if (unbreakableElementIndex === -1) {
                 numChars++;
                 if (numChars > maxLength) {
                     break;
@@ -413,12 +476,21 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
         // are in the input string
         while (nextChar === "<" && string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE) {
             const tagName = tagStack.pop();
-            const tagEndIndex = tagName ? string.indexOf(">", i + 2) : -1;
+            if (!tagName) {
+                break;
+            }
+
+            const tagEndIndex = string.indexOf(">", i + 2);
             if (tagEndIndex === -1 || string.slice(i + 2, tagEndIndex).trim() !== tagName) {
                 throw new Error(`Invalid HTML: ${string}`);
             }
 
-            i = tagEndIndex + 1;
+            if (shouldStrip(tagName)) {
+                string = string.slice(0, i) + string.slice(tagEndIndex + 1);
+            } else {
+                i = tagEndIndex + 1;
+            }
+
             nextChar = string.charAt(i);
         }
 
@@ -447,19 +519,10 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
             if (!isLineBreak(string, i)) {
                 result += indicator;
             }
-            while (tagStack.length) {
-                const tagName = tagStack.pop();
-                result += `</${tagName}>`;
-            }
-            return result;
+            return popTagStack(result);
         }
     } else if (numLines > maxLines) {
-        let result = string.slice(0, i);
-        while (tagStack.length) {
-            const tagName = tagStack.pop();
-            result += `</${tagName}>`;
-        }
-        return result;
+        return popTagStack(string.slice(0, i));
     }
 
     return string;
