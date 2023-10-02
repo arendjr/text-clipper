@@ -4,8 +4,15 @@
     "description": "Fast and correct clip functions for HTML and plain text.",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.js",
+            "require": "./dist/index.cjs"
+        }
+    },
     "scripts": {
-        "build": "tsc",
+        "build": "tsup",
         "lint": "eslint mod.ts src/*.ts tests/*/*.ts",
         "prepublish": "yarn build",
         "test": "jest"
@@ -15,6 +22,9 @@
         "type": "git",
         "url": "https://github.com/arendjr/text-clipper.git"
     },
+    "files": [
+        "dist"
+    ],
     "keywords": [
         "clip",
         "html",
@@ -25,6 +35,7 @@
     ],
     "license": "MIT",
     "devDependencies": {
+        "@tsconfig/node18": "^18.2.2",
         "@types/jest": "^25.2.2",
         "@typescript-eslint/eslint-plugin": "^2.33.0",
         "@typescript-eslint/parser": "^2.33.0",
@@ -36,7 +47,8 @@
         "prepush": "^3.1.11",
         "prettier": "^2.0.5",
         "ts-jest": "^25.5.1",
-        "typescript": "^3.9.2"
+        "tsup": "^7.2.0",
+        "typescript": "^5.2.2"
     },
     "prepush": {
         "tasks": [

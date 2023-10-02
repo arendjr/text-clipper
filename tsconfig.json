@@ -1,4 +1,5 @@
 {
+    "extends": "@tsconfig/node18/tsconfig.json",
     "compilerOptions": {
         "allowJs": true,
         "allowSyntheticDefaultImports": true,
