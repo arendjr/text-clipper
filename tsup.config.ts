@@ -11,11 +11,5 @@ export default defineConfig({
     skipNodeModulesBundle: true,
     splitting: true,
     target: "es2017",
-    async onSuccess() {
-        const file = path.join(__dirname, './dist/index.js');
-        let code = await fsp.readFile(file, "utf8");
-        code = code.replace("exports.default =", "module.exports =");
-        code += "exports.default = module.exports;";
-        fsp.writeFile(file, code);
-    },
+    cjsInterop: true,
 });
