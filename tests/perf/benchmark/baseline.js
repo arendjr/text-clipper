@@ -100,7 +100,9 @@ var SIMPLIFY_WHITESPACE_REGEX = /\s{2,}/g;
  * @return The clipped string.
  */
 function clip(string, maxLength, options) {
-    if (options === void 0) { options = {}; }
+    if (options === void 0) {
+        options = {};
+    }
     if (!string) {
         return "";
     }
@@ -111,7 +113,12 @@ function clip(string, maxLength, options) {
 }
 exports.default = clip;
 function clipHtml(string, maxLength, options) {
-    var _a = options.imageWeight, imageWeight = _a === void 0 ? 2 : _a, _b = options.indicator, indicator = _b === void 0 ? "\u2026" : _b, _c = options.maxLines, maxLines = _c === void 0 ? Infinity : _c;
+    var _a = options.imageWeight,
+        imageWeight = _a === void 0 ? 2 : _a,
+        _b = options.indicator,
+        indicator = _b === void 0 ? "\u2026" : _b,
+        _c = options.maxLines,
+        maxLines = _c === void 0 ? Infinity : _c;
     var numChars = indicator.length;
     var numLines = 1;
     var i = 0;
@@ -125,13 +132,14 @@ function clipHtml(string, maxLength, options) {
         i += nextBlockSize;
         if (!isUnbreakableContent) {
             if (shouldSimplifyWhiteSpace(tagStack)) {
-                numChars += simplifyWhiteSpace(nextBlockSize === rest.length ? rest : rest.slice(0, nextIndex)).length;
+                numChars += simplifyWhiteSpace(
+                    nextBlockSize === rest.length ? rest : rest.slice(0, nextIndex),
+                ).length;
                 if (numChars > maxLength) {
                     i -= nextBlockSize; // We just cut off the entire incorrectly placed text...
                     break;
                 }
-            }
-            else {
+            } else {
                 numChars += nextBlockSize;
                 if (numChars > maxLength) {
                     i = Math.max(i - numChars + maxLength, 0);
@@ -149,17 +157,17 @@ function clipHtml(string, maxLength, options) {
             if (isSpecialTag && string.substr(i + 2, 2) === "--") {
                 var commentEndIndex = string.indexOf("-->", i + 4) + 3;
                 i = commentEndIndex - 1; // - 1 because the outer for loop will increment it
-            }
-            else if (isSpecialTag && string.substr(i + 2, 7) === "[CDATA[") {
+            } else if (isSpecialTag && string.substr(i + 2, 7) === "[CDATA[") {
                 var cdataEndIndex = string.indexOf("]]>", i + 9) + 3;
                 i = cdataEndIndex - 1; // - 1 because the outer for loop will increment it
                 // note we don't count CDATA text for our character limit because it is only
                 // allowed within SVG and MathML content, both of which we don't clip
-            }
-            else {
+            } else {
                 // don't open new tags if we are currently at the limit
-                if (numChars === maxLength &&
-                    string.charCodeAt(i + 1) !== FORWARD_SLASH_CHAR_CODE) {
+                if (
+                    numChars === maxLength &&
+                    string.charCodeAt(i + 1) !== FORWARD_SLASH_CHAR_CODE
+                ) {
                     numChars++;
                     break;
                 }
@@ -177,36 +185,36 @@ function clipHtml(string, maxLength, options) {
                             if (charCode_1 === attributeQuoteCharCode) {
                                 isAttributeValue = false;
                             }
-                        }
-                        else {
+                        } else {
                             if (isWhiteSpace(charCode_1)) {
                                 isAttributeValue = false;
-                            }
-                            else if (charCode_1 === TAG_CLOSE_CHAR_CODE) {
+                            } else if (charCode_1 === TAG_CLOSE_CHAR_CODE) {
                                 isAttributeValue = false;
                                 endIndex--; // re-evaluate this character
                             }
                         }
-                    }
-                    else if (charCode_1 === EQUAL_SIGN_CHAR_CODE) {
+                    } else if (charCode_1 === EQUAL_SIGN_CHAR_CODE) {
                         while (isWhiteSpace(string.charCodeAt(endIndex + 1))) {
                             endIndex++; // skip whitespace
                         }
                         isAttributeValue = true;
                         var firstAttributeCharCode = string.charCodeAt(endIndex + 1);
-                        if (firstAttributeCharCode === DOUBLE_QUOTE_CHAR_CODE ||
-                            firstAttributeCharCode === SINGLE_QUOTE_CHAR_CODE) {
+                        if (
+                            firstAttributeCharCode === DOUBLE_QUOTE_CHAR_CODE ||
+                            firstAttributeCharCode === SINGLE_QUOTE_CHAR_CODE
+                        ) {
                             attributeQuoteCharCode = firstAttributeCharCode;
                             endIndex++;
-                        }
-                        else {
+                        } else {
                             attributeQuoteCharCode = 0;
                         }
-                    }
-                    else if (charCode_1 === TAG_CLOSE_CHAR_CODE) {
+                    } else if (charCode_1 === TAG_CLOSE_CHAR_CODE) {
                         var isEndTag = string.charCodeAt(i + 1) === FORWARD_SLASH_CHAR_CODE;
                         var tagNameStartIndex = i + (isEndTag ? 2 : 1);
-                        var tagNameEndIndex = Math.min(indexOfWhiteSpace(string, tagNameStartIndex), endIndex);
+                        var tagNameEndIndex = Math.min(
+                            indexOfWhiteSpace(string, tagNameStartIndex),
+                            endIndex,
+                        );
                         var tagName = string
                             .slice(tagNameStartIndex, tagNameEndIndex)
                             .toLowerCase();
@@ -243,23 +251,22 @@ function clipHtml(string, maxLength, options) {
                                     }
                                 }
                             }
-                        }
-                        else if (VOID_ELEMENTS.includes(tagName) ||
-                            string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE) {
+                        } else if (
+                            VOID_ELEMENTS.includes(tagName) ||
+                            string.charCodeAt(endIndex - 1) === FORWARD_SLASH_CHAR_CODE
+                        ) {
                             if (tagName === "br") {
                                 numLines++;
                                 if (numLines > maxLines) {
                                     break;
                                 }
-                            }
-                            else if (tagName === "img") {
+                            } else if (tagName === "img") {
                                 numChars += imageWeight;
                                 if (numChars > maxLength) {
                                     break;
                                 }
                             }
-                        }
-                        else {
+                        } else {
                             tagStack.push(tagName);
                             if (tagName === "math" || tagName === "svg") {
                                 isUnbreakableContent = true;
@@ -273,19 +280,16 @@ function clipHtml(string, maxLength, options) {
                     break;
                 }
             }
-        }
-        else if (charCode === AMPERSAND_CHAR_CODE) {
+        } else if (charCode === AMPERSAND_CHAR_CODE) {
             var endIndex = i + 1;
             var isCharacterReference = true;
             while (true /* eslint-disable-line */) {
                 var charCode_2 = string.charCodeAt(endIndex);
                 if (isCharacterReferenceCharacter(charCode_2)) {
                     endIndex++;
-                }
-                else if (charCode_2 === SEMICOLON_CHAR_CODE) {
+                } else if (charCode_2 === SEMICOLON_CHAR_CODE) {
                     break;
-                }
-                else {
+                } else {
                     isCharacterReference = false;
                     break;
                 }
@@ -299,8 +303,7 @@ function clipHtml(string, maxLength, options) {
             if (isCharacterReference) {
                 i = endIndex;
             }
-        }
-        else if (charCode === NEWLINE_CHAR_CODE) {
+        } else if (charCode === NEWLINE_CHAR_CODE) {
             if (!isUnbreakableContent && !shouldSimplifyWhiteSpace(tagStack)) {
                 numChars++;
                 if (numChars > maxLength) {
@@ -311,8 +314,7 @@ function clipHtml(string, maxLength, options) {
                     break;
                 }
             }
-        }
-        else {
+        } else {
             if (!isUnbreakableContent) {
                 numChars++;
                 if (numChars > maxLength) {
@@ -330,13 +332,14 @@ function clipHtml(string, maxLength, options) {
         var nextChar = takeHtmlCharAt(string, i);
         if (indicator) {
             var peekIndex = i + nextChar.length;
-            while (string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
-                string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE) {
+            while (
+                string.charCodeAt(peekIndex) === TAG_OPEN_CHAR_CODE &&
+                string.charCodeAt(peekIndex + 1) === FORWARD_SLASH_CHAR_CODE
+            ) {
                 var nextPeekIndex = string.indexOf(">", peekIndex + 2) + 1;
                 if (nextPeekIndex) {
                     peekIndex = nextPeekIndex;
-                }
-                else {
+                } else {
                     break;
                 }
             }
@@ -370,12 +373,10 @@ function clipHtml(string, maxLength, options) {
                         // of words, but given this seems highly unlikely and the alternative is
                         // doing another full parsing of the preceding text, this seems acceptable.
                         break;
-                    }
-                    else if (charCode === NEWLINE_CHAR_CODE || charCode === TAG_OPEN_CHAR_CODE) {
+                    } else if (charCode === NEWLINE_CHAR_CODE || charCode === TAG_OPEN_CHAR_CODE) {
                         i = j;
                         break;
-                    }
-                    else if (isWhiteSpace(charCode)) {
+                    } else if (isWhiteSpace(charCode)) {
                         i = j + (indicator ? 1 : 0);
                         break;
                     }
@@ -391,8 +392,7 @@ function clipHtml(string, maxLength, options) {
             }
             return result;
         }
-    }
-    else if (numLines > maxLines) {
+    } else if (numLines > maxLines) {
         var result = string.slice(0, i);
         while (tagStack.length) {
             var tagName = tagStack.pop();
@@ -403,7 +403,10 @@ function clipHtml(string, maxLength, options) {
     return string;
 }
 function clipPlainText(string, maxLength, options) {
-    var _a = options.indicator, indicator = _a === void 0 ? "\u2026" : _a, _b = options.maxLines, maxLines = _b === void 0 ? Infinity : _b;
+    var _a = options.indicator,
+        indicator = _a === void 0 ? "\u2026" : _a,
+        _b = options.maxLines,
+        maxLines = _b === void 0 ? Infinity : _b;
     var numChars = indicator.length;
     var numLines = 1;
     var i = 0;
@@ -419,8 +422,7 @@ function clipPlainText(string, maxLength, options) {
             if (numLines > maxLines) {
                 break;
             }
-        }
-        else if ((charCode & 0xfc00) === 0xd800) {
+        } else if ((charCode & 0xfc00) === 0xd800) {
             // high Unicode surrogate should never be separated from its matching low surrogate
             var nextCharCode = string.charCodeAt(i + 1);
             if ((nextCharCode & 0xfc00) === 0xdc00) {
@@ -434,8 +436,7 @@ function clipPlainText(string, maxLength, options) {
             var peekIndex = i + nextChar.length;
             if (peekIndex === string.length) {
                 return string;
-            }
-            else if (string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
+            } else if (string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
                 return string.slice(0, i + nextChar.length);
             }
         }
@@ -447,16 +448,14 @@ function clipPlainText(string, maxLength, options) {
                     i = j;
                     nextChar = "\n";
                     break;
-                }
-                else if (isWhiteSpace(charCode)) {
+                } else if (isWhiteSpace(charCode)) {
                     i = j + (indicator ? 1 : 0);
                     break;
                 }
             }
         }
         return string.slice(0, i) + (nextChar === "\n" ? "" : indicator);
-    }
-    else if (numLines > maxLines) {
+    } else if (numLines > maxLines) {
         return string.slice(0, i);
     }
     return string;
@@ -473,26 +472,28 @@ function indexOfWhiteSpace(string, fromIndex) {
     return length;
 }
 function isCharacterReferenceCharacter(charCode) {
-    return ((charCode >= 48 && charCode <= 57) ||
+    return (
+        (charCode >= 48 && charCode <= 57) ||
         (charCode >= 65 && charCode <= 90) ||
-        (charCode >= 97 && charCode <= 122));
+        (charCode >= 97 && charCode <= 122)
+    );
 }
 function isLineBreak(string, index) {
     var firstCharCode = string.charCodeAt(index);
     if (firstCharCode === NEWLINE_CHAR_CODE) {
         return true;
-    }
-    else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
+    } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
         var newlineElements = "(" + BLOCK_ELEMENTS.join("|") + "|br)";
         var newlineRegExp = new RegExp("^<" + newlineElements + "[\t\n\f\r ]*/?>", "i");
         return newlineRegExp.test(string.slice(index));
-    }
-    else {
+    } else {
         return false;
     }
 }
 function isWhiteSpace(charCode) {
-    return (charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 || charCode === 32);
+    return (
+        charCode === 9 || charCode === 10 || charCode === 12 || charCode === 13 || charCode === 32
+    );
 }
 /**
  * Certain tags don't display their whitespace-only content. In such cases, we
@@ -532,12 +533,10 @@ function takeHtmlCharAt(string, index) {
             var nextCharCode = string.charCodeAt(index);
             if (isCharacterReferenceCharacter(nextCharCode)) {
                 char += String.fromCharCode(nextCharCode);
-            }
-            else if (nextCharCode === SEMICOLON_CHAR_CODE) {
+            } else if (nextCharCode === SEMICOLON_CHAR_CODE) {
                 char += String.fromCharCode(nextCharCode);
                 break;
-            }
-            else {
+            } else {
                 break;
             }
         }

@@ -184,7 +184,9 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
 
     const tagStack: Array<string> = []; // Stack of currently open HTML tags.
     const popTagStack = (result: string) => {
-        let tagName;
+        let tagName: string | undefined;
+        // biome-ignore lint/style/noCommaOperator: Otherwise we need to pop...
+        // biome-ignore lint/suspicious/noAssignInExpressions: ... in two places.
         while (((tagName = tagStack.pop()), tagName !== undefined)) {
             if (!shouldStrip(tagName)) {
                 result += `</${tagName}>`;
@@ -623,15 +625,16 @@ function isCharacterReferenceCharacter(charCode: number): boolean {
 }
 
 function isLineBreak(string: string, index: number): boolean {
-    const firstCharCode = string.charCodeAt(index);
-    if (firstCharCode === NEWLINE_CHAR_CODE) {
-        return true;
-    } else if (firstCharCode === TAG_OPEN_CHAR_CODE) {
-        const newlineElements = `(${BLOCK_ELEMENTS.join("|")}|br)`;
-        const newlineRegExp = new RegExp(`^<${newlineElements}[\t\n\f\r ]*/?>`, "i");
-        return newlineRegExp.test(string.slice(index));
-    } else {
-        return false;
+    switch (string.charCodeAt(index)) {
+        case NEWLINE_CHAR_CODE:
+            return true;
+        case TAG_OPEN_CHAR_CODE: {
+            const newlineElements = `(${BLOCK_ELEMENTS.join("|")}|br)`;
+            const newlineRegExp = new RegExp(`^<${newlineElements}[\t\n\f\r ]*/?>`, "i");
+            return newlineRegExp.test(string.slice(index));
+        }
+        default:
+            return false;
     }
 }
 

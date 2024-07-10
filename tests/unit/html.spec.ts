@@ -184,17 +184,29 @@ test("html: test max lines", () => {
     expect(clip("Lorum\nipsum\n", 100, { html: true, maxLines: 2 })).toBe("Lorum\nipsum");
     expect(clip("Lorum\nipsum\n\n", 100, { html: true, maxLines: 2 })).toBe("Lorum\nipsum");
 
-    expect(clip("<p>Lorem ipsum</p><p>Lorem ipsum</p>", 100, { html: true, maxLines: 2 })).toBe(
-        "<p>Lorem ipsum</p><p>Lorem ipsum</p>",
-    );
-    expect(clip("<p>Lorem ipsum</p><p>Lorem ipsum</p>", 100, { html: true, maxLines: 1 })).toBe(
-        "<p>Lorem ipsum</p>",
-    );
     expect(
-        clip("<div>Lorem ipsum</div><div>Lorem ipsum</div>", 100, { html: true, maxLines: 2 }),
+        clip("<p>Lorem ipsum</p><p>Lorem ipsum</p>", 100, {
+            html: true,
+            maxLines: 2,
+        }),
+    ).toBe("<p>Lorem ipsum</p><p>Lorem ipsum</p>");
+    expect(
+        clip("<p>Lorem ipsum</p><p>Lorem ipsum</p>", 100, {
+            html: true,
+            maxLines: 1,
+        }),
+    ).toBe("<p>Lorem ipsum</p>");
+    expect(
+        clip("<div>Lorem ipsum</div><div>Lorem ipsum</div>", 100, {
+            html: true,
+            maxLines: 2,
+        }),
     ).toBe("<div>Lorem ipsum</div><div>Lorem ipsum</div>");
     expect(
-        clip("<div>Lorem ipsum</div><div>Lorem ipsum</div>", 100, { html: true, maxLines: 1 }),
+        clip("<div>Lorem ipsum</div><div>Lorem ipsum</div>", 100, {
+            html: true,
+            maxLines: 1,
+        }),
     ).toBe("<div>Lorem ipsum</div>");
 });
 
@@ -333,8 +345,7 @@ test("html: issue #12: split tables", () => {
     </tbody>
 </table>`;
 
-    expect(clip(html, 26, { html: true, breakWords: true }))
-        .toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    expect(clip(html, 26, { html: true, breakWords: true })).toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
     <tbody>
         <tr>
             <td>fb</td>
@@ -347,8 +358,7 @@ test("html: issue #12: split tables", () => {
         <tr>
             <td>intel</td></tr></tbody></table>`);
 
-    expect(clip(html, 25, { html: true, breakWords: true }))
-        .toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    expect(clip(html, 25, { html: true, breakWords: true })).toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
     <tbody>
         <tr>
             <td>fb</td>
@@ -361,8 +371,7 @@ test("html: issue #12: split tables", () => {
         <tr>
             <td>int\u2026</td></tr></tbody></table>`);
 
-    expect(clip(html, 25, { html: true, breakWords: true, maxLines: 2 }))
-        .toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
+    expect(clip(html, 25, { html: true, breakWords: true, maxLines: 2 })).toBe(`<table border="1" cellpadding="1" cellspacing="1" style="width: 500px">
     <tbody>
         <tr>
             <td>fb</td>

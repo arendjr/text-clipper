@@ -1,4 +1,4 @@
-const { performance } = require("perf_hooks");
+const { performance } = require("node:perf_hooks");
 
 const clip = require("../../../dist").default;
 const baseline = require("./baseline").default;
@@ -31,7 +31,7 @@ const benchmarks = {
     "text-clipper-baseline": (string, limit) => baseline(string, limit, { html: true }),
     "trim-html": (string, limit) => trimHtml(string, { limit }),
     "truncate-html": truncateHtml,
-    "html-truncate": htmlTruncate
+    "html-truncate": htmlTruncate,
 };
 
 for (const [name, fn] of Object.entries(benchmarks)) {
@@ -42,7 +42,7 @@ for (const [name, fn] of Object.entries(benchmarks)) {
 
     const begin = performance.now();
     const measures = [];
-    
+
     for (let i = 0; i < MAX_NUM_MEASURES; i++) {
         const start = performance.now();
         for (let j = 0; j < NUM_ITERATIONS_PER_MEASURE; j++) {
@@ -67,7 +67,9 @@ for (const [name, fn] of Object.entries(benchmarks)) {
 
     const average = measures.reduce((sum, measure) => sum + measure, 0) / measures.length;
 
-    console.log(`Average ops/s: ${toOps(average)} (fastest: ${toOps(fastest)}, slowest: ${toOps(slowest)})`);
+    console.log(
+        `Average ops/s: ${toOps(average)} (fastest: ${toOps(fastest)}, slowest: ${toOps(slowest)})`,
+    );
 }
 
 function toOps(measure) {

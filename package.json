@@ -13,7 +13,7 @@
     },
     "scripts": {
         "build": "tsup",
-        "lint": "eslint mod.ts src/*.ts tests/*/*.ts",
+        "lint": "biome check",
         "prepublish": "yarn build",
         "test": "jest"
     },
@@ -22,38 +22,22 @@
         "type": "git",
         "url": "https://github.com/arendjr/text-clipper.git"
     },
-    "files": [
-        "dist"
-    ],
-    "keywords": [
-        "clip",
-        "html",
-        "string",
-        "text",
-        "trim",
-        "truncate"
-    ],
+    "files": ["dist"],
+    "keywords": ["clip", "html", "string", "text", "trim", "truncate"],
     "license": "MIT",
     "devDependencies": {
+        "@biomejs/biome": "1.8.3",
         "@tsconfig/node18": "^18.2.2",
         "@types/jest": "^25.2.2",
         "@typescript-eslint/eslint-plugin": "^2.33.0",
         "@typescript-eslint/parser": "^2.33.0",
-        "eslint": "^6.0.0",
-        "eslint-config-prettier": "^6.11.0",
-        "eslint-plugin-jest": "^23.11.0",
-        "eslint-plugin-prettier": "^3.1.3",
         "jest": "^25.0.0",
         "prepush": "^3.1.11",
-        "prettier": "^2.0.5",
         "ts-jest": "^25.5.1",
         "tsup": "^7.2.0",
         "typescript": "^5.2.2"
     },
     "prepush": {
-        "tasks": [
-            "yarn lint",
-            "yarn test"
-        ]
+        "tasks": ["yarn lint", "yarn test"]
     }
 }
