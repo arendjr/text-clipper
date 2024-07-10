@@ -4,6 +4,11 @@
 
 -   `text-clipper` has become a Deno-first library and is now available on [Jsr.io](https://jsr.io).
     Instructions for installation on Node.js/Bun are still included.
+-   Fix #18: Don't include spaces before the indicator.
+-   Fix #19: Introduce a new option `insertIndicatorAtLinebreak` (default: `true`). If you want to
+    keep the behavior of `text-clipper` v2, you should set this back to `false`.
+-   Tweak in behavior: The indicator is never inserted if only whitespace remains after the
+    clipping point.
 
 ## 2.2.0
 

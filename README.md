@@ -82,7 +82,11 @@ also for embedded SVG and MathML content. The default is 2.
 
 The string to insert to indicate the string was clipped. Default: `'…'`.
 
-Note the indicator is only inserted when the clipping doesn't occur at a line-break.
+Note that the indicator is never inserted if only whitespace remains after the clipping point.
+
+### insertIndicatorAtLinebreak
+
+Whether the indicator should be inserted when the text is clipped at a linebreak. Default: `true`.
 
 ### maxLines
 

@@ -16,6 +16,13 @@ interface CommonClipOptions {
     indicator?: string;
 
     /**
+     * Whether the indicator should be inserted when the text is clipped at a linebreak.
+     *
+     * Default: `true`.
+     */
+    insertIndicatorAtLinebreak?: boolean;
+
+    /**
      * Maximum amount of lines allowed. If given, the string will be clipped either at the moment
      * the maximum amount of characters is exceeded or the moment maxLines newlines are discovered,
      * whichever comes first.
@@ -170,6 +177,7 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
     const {
         imageWeight = 2,
         indicator = "\u2026",
+        insertIndicatorAtLinebreak = true,
         maxLines = Infinity,
         stripTags = false,
     } = options;
@@ -528,21 +536,37 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                 }
             }
 
-            let result = string.slice(0, i);
-            if (!isLineBreak(string, i)) {
-                result += indicator;
+            const insertIndicator =
+                (insertIndicatorAtLinebreak || !isLineBreak(string, i)) &&
+                hasHtmlNonWhitespace(string, i);
+
+            // Don't leave awkward whitespace at the end.
+            while (i > 0 && isWhiteSpace(string.charCodeAt(i - 1)!)) {
+                i--;
             }
-            return popTagStack(result);
+
+            return popTagStack(string.slice(0, i) + (insertIndicator ? indicator : ""));
         }
     } else if (numLines > maxLines) {
-        return popTagStack(string.slice(0, i));
+        const insertIndicator = insertIndicatorAtLinebreak && hasHtmlNonWhitespace(string, i);
+
+        // Don't leave awkward whitespace at the end.
+        while (i > 0 && isWhiteSpace(string.charCodeAt(i - 1)!)) {
+            i--;
+        }
+
+        return popTagStack(string.slice(0, i) + (insertIndicator ? indicator : ""));
     }
 
     return string;
 }
 
 function clipPlainText(string: string, maxLength: number, options: CommonClipOptions): string {
-    const { indicator = "\u2026", maxLines = Infinity } = options;
+    const {
+        indicator = "\u2026",
+        insertIndicatorAtLinebreak = true,
+        maxLines = Infinity,
+    } = options;
 
     let numChars = indicator.length;
     let numLines = 1;
@@ -577,7 +601,9 @@ function clipPlainText(string: string, maxLength: number, options: CommonClipOpt
             if (peekIndex === string.length) {
                 return string;
             } else if (string.charCodeAt(peekIndex) === NEWLINE_CHAR_CODE) {
-                return string.slice(0, i + nextChar.length);
+                const insertIndicator =
+                    insertIndicatorAtLinebreak && hasNonWhitespace(string, peekIndex);
+                return string.slice(0, peekIndex) + (insertIndicator ? indicator : "");
             }
         }
 
@@ -596,12 +622,59 @@ function clipPlainText(string: string, maxLength: number, options: CommonClipOpt
             }
         }
 
-        return string.slice(0, i) + (nextChar === "\n" ? "" : indicator);
+        const insertIndicator =
+            (insertIndicatorAtLinebreak || nextChar !== "\n") && hasNonWhitespace(string, i);
+
+        // Don't leave awkward whitespace at the end.
+        while (i > 0 && isWhiteSpace(string.charCodeAt(i - 1)!)) {
+            i--;
+        }
+
+        return string.slice(0, i) + (insertIndicator ? indicator : "");
     } else if (numLines > maxLines) {
-        return string.slice(0, i);
+        const insertIndicator = insertIndicatorAtLinebreak && hasNonWhitespace(string, i);
+
+        // Don't leave awkward whitespace at the end.
+        while (i > 0 && isWhiteSpace(string.charCodeAt(i - 1)!)) {
+            i--;
+        }
+
+        return string.slice(0, i) + (insertIndicator ? indicator : "");
     }
 
     return string;
+}
+
+function hasHtmlNonWhitespace(string: string, fromIndex: number): boolean {
+    const { length } = string;
+    for (let i = fromIndex; i < length; i++) {
+        const charCode = string.charCodeAt(i);
+        if (charCode === TAG_OPEN_CHAR_CODE) {
+            do {
+                i++;
+            } while (i < length && isWhiteSpace(string.charCodeAt(i)));
+            if (string.charCodeAt(i) === FORWARD_SLASH_CHAR_CODE) {
+                do {
+                    i++;
+                } while (i < length && string.charCodeAt(i) !== TAG_CLOSE_CHAR_CODE);
+            } else {
+                return true;
+            }
+        } else if (!isWhiteSpace(charCode)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+function hasNonWhitespace(string: string, fromIndex: number): boolean {
+    const { length } = string;
+    for (let i = fromIndex; i < length; i++) {
+        if (!isWhiteSpace(string.charCodeAt(i))) {
+            return true;
+        }
+    }
+    return false;
 }
 
 function indexOfWhiteSpace(string: string, fromIndex: number): number {
