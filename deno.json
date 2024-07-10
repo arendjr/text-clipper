@@ -5,6 +5,7 @@
         "allowJs": true,
         "strict": true
     },
+    "exports": "./src/index.ts",
     "lock": false,
     "publish": {
         "include": ["src"]
