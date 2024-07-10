@@ -4,6 +4,7 @@
 
 -   `text-clipper` has become a Deno-first library and is now available on [Jsr.io](https://jsr.io).
     Instructions for installation on Node.js/Bun are still included.
+-   Fix #18: Don't include spaces before the indicator.
 
 ## 2.2.0
 

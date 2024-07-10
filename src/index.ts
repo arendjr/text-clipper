@@ -518,14 +518,20 @@ function clipHtml(string: string, maxLength: number, options: ClipHtmlOptions): 
                         // of words, but given this seems highly unlikely and the alternative is
                         // doing another full parsing of the preceding text, this seems acceptable.
                         break;
-                    } else if (charCode === NEWLINE_CHAR_CODE || charCode === TAG_OPEN_CHAR_CODE) {
+                    } else if (
+                        charCode === NEWLINE_CHAR_CODE ||
+                        charCode === TAG_OPEN_CHAR_CODE ||
+                        isWhiteSpace(charCode)
+                    ) {
                         i = j;
-                        break;
-                    } else if (isWhiteSpace(charCode)) {
-                        i = j + (indicator ? 1 : 0);
                         break;
                     }
                 }
+            }
+
+            // Don't leave awkward whitespace before the ellipsis.
+            while (i > 0 && isWhiteSpace(string.charCodeAt(i - 1)!)) {
+                i--;
             }
 
             let result = string.slice(0, i);
@@ -594,6 +600,11 @@ function clipPlainText(string: string, maxLength: number, options: CommonClipOpt
                     break;
                 }
             }
+        }
+
+        // Don't leave awkward whitespace before the ellipsis.
+        while (i > 0 && isWhiteSpace(string.charCodeAt(i - 1)!)) {
+            i--;
         }
 
         return string.slice(0, i) + (nextChar === "\n" ? "" : indicator);

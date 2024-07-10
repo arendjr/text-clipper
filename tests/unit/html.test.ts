@@ -8,10 +8,7 @@ Deno.test("html: test basic HTML", () => {
     assertEquals(clip("<p>Lorum ipsum</p>", 5, options), "<p>Loru\u2026</p>");
     assertEquals(clip("<p><i>Lorum</i> <i>ipsum</i></p>", 5, options), "<p><i>Loru\u2026</i></p>");
     assertEquals(clip("<p><i>Lorum</i> <i>ipsum</i></p>", 6, options), "<p><i>Lorum</i>\u2026</p>");
-    assertEquals(
-        clip("<p><i>Lorum</i> <i>ipsum</i></p>", 7, options),
-        "<p><i>Lorum</i> \u2026</p>",
-    );
+    assertEquals(clip("<p><i>Lorum</i> <i>ipsum</i></p>", 7, options), "<p><i>Lorum</i>\u2026</p>");
     assertEquals(clip("<p><i>Lorum</i>\n<i>ipsum</i></p>", 5, options), "<p><i>Lorum</i></p>");
     assertEquals(clip("<p><i>Lorum</i><br><i>ipsum</i></p>", 5, options), "<p><i>Lorum</i></p>");
 
@@ -44,7 +41,7 @@ Deno.test("html: test basic HTML", () => {
 
     assertEquals(
         clip('<a href="http://just-a-link.com">Just a link</a>', 8, options),
-        '<a href="http://just-a-link.com">Just a \u2026</a>',
+        '<a href="http://just-a-link.com">Just a\u2026</a>',
     );
 
     assertEquals(
@@ -150,10 +147,10 @@ Deno.test("html: test plain text", () => {
 
     assertEquals(clip("Lorum ipsum", 5, options), "Loru\u2026");
     assertEquals(clip("Lorum ipsum", 6, options), "Lorum\u2026");
-    assertEquals(clip("Lorum ipsum", 7, options), "Lorum \u2026");
-    assertEquals(clip("Lorum ipsum", 8, options), "Lorum \u2026");
-    assertEquals(clip("Lorum ipsum", 9, options), "Lorum \u2026");
-    assertEquals(clip("Lorum ipsum", 10, options), "Lorum \u2026");
+    assertEquals(clip("Lorum ipsum", 7, options), "Lorum\u2026");
+    assertEquals(clip("Lorum ipsum", 8, options), "Lorum\u2026");
+    assertEquals(clip("Lorum ipsum", 9, options), "Lorum\u2026");
+    assertEquals(clip("Lorum ipsum", 10, options), "Lorum\u2026");
     assertEquals(clip("Lorum ipsum", 11, options), "Lorum ipsum");
 
     assertEquals(clip("Lorum\nipsum", 10, options), "Lorum");
@@ -167,7 +164,7 @@ Deno.test("html: test word breaking", () => {
 
     assertEquals(clip("Lorum ipsum", 5, options), "Loru\u2026");
     assertEquals(clip("Lorum ipsum", 6, options), "Lorum\u2026");
-    assertEquals(clip("Lorum ipsum", 7, options), "Lorum \u2026");
+    assertEquals(clip("Lorum ipsum", 7, options), "Lorum\u2026");
     assertEquals(clip("Lorum ipsum", 8, options), "Lorum i\u2026");
     assertEquals(clip("Lorum ipsum", 9, options), "Lorum ip\u2026");
     assertEquals(clip("Lorum ipsum", 10, options), "Lorum ips\u2026");
@@ -178,7 +175,7 @@ Deno.test("html: test word breaking without indicator", () => {
     const options = { breakWords: true, html: true, indicator: "" };
 
     assertEquals(clip("Lorum ipsum", 5, options), "Lorum");
-    assertEquals(clip("Lorum ipsum", 6, options), "Lorum ");
+    assertEquals(clip("Lorum ipsum", 6, options), "Lorum");
     assertEquals(clip("Lorum ipsum", 7, options), "Lorum i");
     assertEquals(clip("Lorum ipsum", 8, options), "Lorum ip");
     assertEquals(clip("Lorum ipsum", 9, options), "Lorum ips");
@@ -251,7 +248,7 @@ Deno.test("html: test ampersand", () => {
     assertEquals(clip("<p>&amp;</p>", 1, options), "");
     assertEquals(clip("<p>&amp;</p>", 2, options), "<p>&amp;</p>");
 
-    assertEquals(clip("foo & bar", 5, options), "foo \u2026");
+    assertEquals(clip("foo & bar", 5, options), "foo\u2026");
     assertEquals(clip("foo & bar", 9, options), "foo & bar");
     assertEquals(clip("foo&<i>bar</i>", 5, options), "foo&\u2026");
     assertEquals(clip("foo&<i>bar</i>", 7, options), "foo&<i>bar</i>");
@@ -421,13 +418,13 @@ Deno.test("html: test strip tags", () => {
     );
     assertEquals(
         clip(htmlWithImage, 12, { html: true, stripTags: ["img"] }),
-        "<p>Image  and \u2026</p>",
+        "<p>Image  and\u2026</p>",
     );
     assertEquals(
         clip(htmlWithImage, 12, { html: true, stripTags: ["img", "p"] }),
-        "Image  and \u2026",
+        "Image  and\u2026",
     );
-    assertEquals(clip(htmlWithImage, 12, { html: true, stripTags: true }), "Image  and \u2026");
+    assertEquals(clip(htmlWithImage, 12, { html: true, stripTags: true }), "Image  and\u2026");
     assertEquals(
         clip(htmlWithImage, 15, { html: true, stripTags: ["img"] }),
         "<p>Image  and such</p>",
@@ -455,11 +452,11 @@ Deno.test("html: test strip tags", () => {
         </tr>
     </tbody>
 </table> world`;
-    assertEquals(clip(htmlWithTable, 10, { html: true, stripTags: true }), "hello fb \u2026");
-    assertEquals(clip(htmlWithTable, 16, { html: true, stripTags: true }), "hello fb fbfbfb ");
+    assertEquals(clip(htmlWithTable, 10, { html: true, stripTags: true }), "hello fb\u2026");
+    assertEquals(clip(htmlWithTable, 16, { html: true, stripTags: true }), "hello fb fbfbfb\u2026");
     assertEquals(
         clip(htmlWithTable, 24, { html: true, stripTags: true }),
-        "hello fb fbfbfb google \u2026",
+        "hello fb fbfbfb google\u2026",
     );
 
     // SVG's `imageWeight` should not be counted when stripped:
