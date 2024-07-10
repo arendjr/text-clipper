@@ -1,0 +1,12 @@
+{
+    "name": "@arendjr/text-clipper",
+    "version": "3.0.0",
+    "compilerOptions": {
+        "allowJs": true,
+        "strict": true
+    },
+    "lock": false,
+    "publish": {
+        "include": ["src"]
+    }
+}

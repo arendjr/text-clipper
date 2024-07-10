@@ -1,5 +1,10 @@
 # CHANGELOG
 
+## 3.0.0
+
+-   `text-clipper` has become a Deno-first library and is now available on [Jsr.io](https://jsr.io).
+    Instructions for installation on Node.js/Bun are still included.
+
 ## 2.2.0
 
 -   Implement #14: Add `stripTags` option.

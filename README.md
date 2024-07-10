@@ -2,9 +2,6 @@
 
 Fast and correct clip functions for HTML and plain text.
 
-[![Build Status](https://travis-ci.org/arendjr/text-clipper.svg?branch=master)](https://travis-ci.org/arendjr/text-clipper)
-[![text-clipper on NPM](https://img.shields.io/npm/v/text-clipper.svg)](https://www.npmjs.com/package/text-clipper)
-
 ## Why use text-clipper?
 
 text-clipper offers the following advantages over similar libraries that allow clipping HTML:
@@ -22,42 +19,45 @@ text-clipper offers the following advantages over similar libraries that allow c
 
 ## Usage
 
-### Node.js
+### Deno
 
-First install the `text-clipper` package:
+First install the package:
 
 ```sh
-$ yarn add text-clipper  # or: npm install --save text-clipper
+$ deno add @arendjr/text-clipper
 ```
-
-If compatibility with Internet Explorer is required, make sure you have a polyfill for
-`Array.prototype.includes()`.
 
 Once installed, you can use it as follows:
 
 ```js
-import clip from "text-clipper"; // or: const clip = require("text-clipper").default;
+import clip from "@arendjr/text-clipper";
 
 const clippedString = clip(string, 80); // returns a string of at most 80 characters
 
 const clippedHtml = clip(htmlString, 140, { html: true, maxLines: 5 });
 ```
 
-### Deno
+### Bun
 
-When using Deno, you can import right away:
+Install using the following command instead:
 
-```js
-import clip from "https://raw.githubusercontent.com/arendjr/text-clipper/master/mod.ts";
+```sh
+$ bunx jsr add @arendjr/text-clipper
 ```
 
-And use it like this:
+For usage instructions, see above.
 
-```js
-const clippedString = clip(string, 80); // returns a string of at most 80 characters
+### Node.js
 
-const clippedHtml = clip(htmlString, 140, { html: true, maxLines: 5 });
+Install using one of the following commands, depending on your package manager:
+
+```sh
+$ npx jsr add @arendjr/text-clipper # If using NPM
+$ yarn dlx jsr add @arendjr/text-clipper # If using Yarn
+$ pnpm dlx jsr add @arendjr/text-clipper # If using PNPM
 ```
+
+For usage instructions, see above.
 
 ## Options
 
@@ -107,3 +107,13 @@ clip(input, 140, { html: true, stripTags: ["img", "svg"] });
 ```
 
 Tag names must be specified in lowercase.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+## License
+
+Licensed under the MIT License.
+
+See [LICENSE](LICENSE).
